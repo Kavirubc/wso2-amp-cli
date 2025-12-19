@@ -11,17 +11,17 @@ A CLI tool for managing the WSO2 AI Agent Management Platform.
 git clone https://github.com/Kavirubc/wso2-amp-cli.git
 cd wso2-amp-cli
 
-# Install
-go install
+# Install globally (produces 'amp' binary)
+go install ./cmd/amp
 
 # Or build locally
-go build -o amp
+go build -o amp ./cmd/amp
 ```
 
 ### Using go install
 
 ```bash
-go install github.com/Kavirubc/wso2-amp-cli@latest
+go install github.com/Kavirubc/wso2-amp-cli/cmd/amp@latest
 ```
 
 ## Configuration
@@ -89,10 +89,10 @@ amp config set api_url URL   # Set a setting
 
 ```bash
 # Run without building
-go run main.go agents list --org test --project test
+go run ./cmd/amp agents list --org test --project test
 
 # Build
-go build -o amp
+go build -o amp ./cmd/amp
 
 # Run tests
 go test ./...
