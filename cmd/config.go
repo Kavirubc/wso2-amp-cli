@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/Kavirubc/wso2-amp-cli/internal/config"
+	"github.com/Kavirubc/wso2-amp-cli/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 var configCmd = &cobra.Command{
-	Use: "config",
+	Use:   "config",
 	Short: "Manage CLI configuration",
 	Long: `Manage amp-cli configuration settings.
 
@@ -33,10 +34,11 @@ var configSetCmd = &cobra.Command{
 		if err := config.Set(key, value); err != nil {
 			return fmt.Errorf("failed to save config: %w", err)
 		}
-		fmt.Printf("✅ Set %s = %s\n", key, value)
+		fmt.Println(ui.RenderSuccess(fmt.Sprintf("Set %s = %s", key, value)))
 		return nil
 	},
 }
+
 var configGetCmd = &cobra.Command{
 	Use:   "get <key>",
 	Short: "Get a configuration value",
@@ -45,29 +47,53 @@ var configGetCmd = &cobra.Command{
 		key := args[0]
 		value := config.Get(key)
 		if value == "" {
-			fmt.Printf("%s: (not set)\n", key)
+			fmt.Printf("%s  %s\n", ui.KeyStyle.Render(key+":"), ui.MutedStyle.Render("(not set)"))
 		} else {
-			fmt.Printf("%s: %s\n", key, value)
+			fmt.Printf("%s  %s\n", ui.KeyStyle.Render(key+":"), ui.ValueStyle.Render(value))
 		}
 		return nil
 	},
 }
+
 var configListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all configuration values",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("📋 Current Configuration:")
+		fmt.Println(ui.TitleStyle.Render(fmt.Sprintf("%s Current Configuration", ui.IconConfig)))
 		fmt.Println()
-		fmt.Printf("  api_url:         %s\n", valueOrDefault(config.GetAPIURL(), "(not set)"))
-		fmt.Printf("  api_key_header:  %s\n", valueOrDefault(config.GetAPIKeyHeader(), "(not set)"))
-		fmt.Printf("  api_key:         %s\n", maskValue(config.GetAPIKeyValue()))
+
+		// API Settings
+		fmt.Println(ui.SectionStyle.Render("API Settings"))
+		printConfigRow("api_url", valueOrDefault(config.GetAPIURL(), "(not set)"), false)
+		printConfigRow("api_key_header", valueOrDefault(config.GetAPIKeyHeader(), "(not set)"), false)
+		printConfigRow("api_key", maskValue(config.GetAPIKeyValue()), true)
 		fmt.Println()
-		fmt.Printf("  default_org:     %s\n", valueOrDefault(config.GetDefaultOrg(), "(not set)"))
-		fmt.Printf("  default_project: %s\n", valueOrDefault(config.GetDefaultProject(), "(not set)"))
+
+		// Default Values
+		fmt.Println(ui.SectionStyle.Render("Defaults"))
+		printConfigRow("default_org", valueOrDefault(config.GetDefaultOrg(), "(not set)"), false)
+		printConfigRow("default_project", valueOrDefault(config.GetDefaultProject(), "(not set)"), false)
 		fmt.Println()
-		fmt.Printf("Config file: %s\n", config.ConfigFile())
+
+		// Config file location
+		fmt.Printf("%s  %s\n", ui.MutedStyle.Render("Config file:"), ui.ValueStyle.Render(config.ConfigFile()))
 	},
 }
+
+// printConfigRow prints a styled config key-value pair
+func printConfigRow(key, value string, masked bool) {
+	keyStr := ui.KeyStyle.Render(key + ":")
+	var valStr string
+	if value == "(not set)" {
+		valStr = ui.MutedStyle.Render(value)
+	} else if masked {
+		valStr = ui.MaskedStyle.Render(value)
+	} else {
+		valStr = ui.ValueStyle.Render(value)
+	}
+	fmt.Printf("  %s  %s\n", keyStr, valStr)
+}
+
 // Helper functions
 func valueOrDefault(value, defaultVal string) string {
 	if value == "" {
@@ -75,6 +101,7 @@ func valueOrDefault(value, defaultVal string) string {
 	}
 	return value
 }
+
 func maskValue(value string) string {
 	if value == "" {
 		return "(not set)"
@@ -84,10 +111,11 @@ func maskValue(value string) string {
 	}
 	return "****"
 }
+
 func init() {
 	// Add config command to root
 	rootCmd.AddCommand(configCmd)
-	
+
 	// Add subcommands to config
 	configCmd.AddCommand(configSetCmd)
 	configCmd.AddCommand(configGetCmd)
