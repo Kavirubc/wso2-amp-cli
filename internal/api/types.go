@@ -51,3 +51,11 @@ type DeploymentResponse struct {
 	Environment    string    `json:"environment"`
 	LastDeployedAt time.Time `json:"lastDeployedAt"`
 }
+
+// AgentListResponse wraps the paginated agents response
+type AgentListResponse struct {
+	Agents []AgentResponse `json:"agents"`
+	Limit  int             `json:"limit"`
+	Offset int             `json:"offset"`
+	Total  int             `json:"total"`
+}

@@ -112,12 +112,12 @@ func (c *Client) ListAgents(orgName, projectName string) ([]AgentResponse, error
 		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	var agents []AgentResponse
-	if err := json.NewDecoder(resp.Body).Decode(&agents); err != nil {
+	var listResp AgentListResponse
+	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return agents, nil
+	return listResp.Agents, nil
 }
 
 // GetAgent fetches a specific agent
