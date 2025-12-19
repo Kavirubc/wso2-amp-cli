@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Kavirubc/amp-cli/internal/api"
-	"github.com/Kavirubc/amp-cli/internal/config"
+	"github.com/Kavirubc/wso2-amp-cli/internal/api"
+	"github.com/Kavirubc/wso2-amp-cli/internal/config"
 	"github.com/spf13/cobra"
 )
 

@@ -8,8 +8,8 @@ A CLI tool for managing the WSO2 AI Agent Management Platform.
 
 ```bash
 # Clone the repository
-git clone https://github.com/Kavirubc/amp-cli.git
-cd amp-cli
+git clone https://github.com/Kavirubc/wso2-amp-cli.git
+cd wso2-amp-cli
 
 # Install
 go install
@@ -21,7 +21,7 @@ go build -o amp
 ### Using go install
 
 ```bash
-go install github.com/Kavirubc/amp-cli@latest
+go install github.com/Kavirubc/wso2-amp-cli@latest
 ```
 
 ## Configuration

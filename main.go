@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Kavirubc/amp-cli/cmd"
+	"github.com/Kavirubc/wso2-amp-cli/cmd"
 )
 
 func main() {
