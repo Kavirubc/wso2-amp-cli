@@ -1,0 +1,19 @@
+# Binaries
+amp
+amp-*
+*.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage.out
+
+# Dependency directories (if using vendor)
+vendor/
