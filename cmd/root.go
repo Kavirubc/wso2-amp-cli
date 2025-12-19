@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/Kavirubc/amp-cli/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +23,16 @@ func Execute() error {
 }
 
 func init() {
+	// Initialize config BEFORE any command runs
+	cobra.OnInitialize(initConfig)
+
 	// Persistent flags (available to all subcommands)
 	rootCmd.PersistentFlags().StringP("org", "o", "", "Organization name")
 	rootCmd.PersistentFlags().StringP("project", "p", "", "Project name")
 	rootCmd.PersistentFlags().StringP("output", "", "table", "Output format (table|json)")
+}
+
+// initConfig is called before any command executes
+func initConfig() {
+	_ = config.Init()
 }
