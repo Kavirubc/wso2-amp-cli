@@ -7,6 +7,7 @@ import (
 
 	"github.com/Kavirubc/wso2-amp-cli/internal/api"
 	"github.com/Kavirubc/wso2-amp-cli/internal/config"
+	"github.com/Kavirubc/wso2-amp-cli/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -63,21 +64,25 @@ var agentsListCmd = &cobra.Command{
 
 		// Table output
 		if len(agents) == 0 {
-			fmt.Println("No agents found.")
+			fmt.Println(ui.RenderWarning("No agents found."))
 			return nil
 		}
 
-		fmt.Printf("📋 Agents in %s/%s:\n\n", org, project)
-		fmt.Printf("%-20s %-25s %-10s %-10s\n", "NAME", "DISPLAY NAME", "STATUS", "LANGUAGE")
-		fmt.Printf("%-20s %-25s %-10s %-10s\n", "----", "------------", "------", "--------")
-		for _, agent := range agents {
-			fmt.Printf("%-20s %-25s %-10s %-10s\n",
+		// Build table data
+		headers := []string{"NAME", "DISPLAY NAME", "STATUS", "LANGUAGE"}
+		rows := make([][]string, len(agents))
+		for i, agent := range agents {
+			rows[i] = []string{
 				agent.Name,
 				agent.DisplayName,
-				agent.Status,
+				ui.StatusCell(agent.Status),
 				agent.Language,
-			)
+			}
 		}
+
+		// Render styled table
+		title := fmt.Sprintf("%s Agents in %s/%s", ui.IconAgent, org, project)
+		fmt.Println(ui.RenderTableWithTitle(title, headers, rows))
 
 		return nil
 	},
