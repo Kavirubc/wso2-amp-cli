@@ -69,14 +69,13 @@ var agentsListCmd = &cobra.Command{
 		}
 
 		// Build table data
-		headers := []string{"NAME", "DISPLAY NAME", "STATUS", "LANGUAGE"}
+		headers := []string{"NAME", "DISPLAY NAME", "STATUS"}
 		rows := make([][]string, len(agents))
 		for i, agent := range agents {
 			rows[i] = []string{
 				agent.Name,
 				agent.DisplayName,
 				ui.StatusCell(agent.Status),
-				agent.Language,
 			}
 		}
 

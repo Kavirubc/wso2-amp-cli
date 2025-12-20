@@ -3,12 +3,12 @@ package api
 import "time"
 
 type AgentResponse struct {
+	UUID        string    `json:"uuid,omitempty"`
 	Name        string    `json:"name"`
 	DisplayName string    `json:"displayName,omitempty"`
 	Description string    `json:"description,omitempty"`
 	ProjectName string    `json:"projectName"`
 	Status      string    `json:"status,omitempty"`
-	Language    string    `json:"language,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
@@ -17,8 +17,8 @@ type OrganizationResponse struct {
 	Name        string    `json:"name"`
 	DisplayName string    `json:"displayName,omitempty"`
 	Description string    `json:"description,omitempty"`
+	Namespace   string    `json:"namespace,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
-	Status      string    `json:"status,omitempty"`
 }
 
 // ProjectResponse represents a project
@@ -30,7 +30,6 @@ type ProjectResponse struct {
 	Description        string    `json:"description,omitempty"`
 	DeploymentPipeline string    `json:"deploymentPipeline,omitempty"`
 	CreatedAt          time.Time `json:"createdAt"`
-	Status             string    `json:"status,omitempty"`
 }
 
 type ProjectListResponse struct {

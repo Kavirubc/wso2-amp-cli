@@ -52,14 +52,13 @@ var orgsListCmd = &cobra.Command{
 			return nil
 		}
 
-		headers := []string{"NAME", "DISPLAY NAME", "STATUS"}
+		headers := []string{"NAME", "CREATED AT"}
 
 		rows := make([][]string, len(orgs))
 		for i, org := range orgs {
 			rows[i] = []string{
 				org.Name,
-				org.DisplayName,
-				ui.StatusCell(org.Status),
+				org.CreatedAt.Format("2006-01-02 15:04:05"),
 			}
 		}
 		fmt.Println(ui.RenderTableWithTitle("🏢 Organizations", headers, rows))
