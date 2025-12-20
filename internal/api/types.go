@@ -23,12 +23,21 @@ type OrganizationResponse struct {
 
 // ProjectResponse represents a project
 type ProjectResponse struct {
-	Name        string    `json:"name"`
-	OrgName     string    `json:"orgName"`
-	DisplayName string    `json:"displayName,omitempty"`
-	Description string    `json:"description,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
-	Status      string    `json:"status,omitempty"`
+	UUID               string    `json:"uuid,omitempty"`
+	Name               string    `json:"name"`
+	OrgName            string    `json:"orgName"`
+	DisplayName        string    `json:"displayName,omitempty"`
+	Description        string    `json:"description,omitempty"`
+	DeploymentPipeline string    `json:"deploymentPipeline,omitempty"`
+	CreatedAt          time.Time `json:"createdAt"`
+	Status             string    `json:"status,omitempty"`
+}
+
+type ProjectListResponse struct {
+	Projects []ProjectResponse `json:"projects"`
+	Limit    int               `json:"limit"`
+	Offset   int               `json:"offset"`
+	Total    int               `json:"total"`
 }
 
 // BuildResponse represents a build
