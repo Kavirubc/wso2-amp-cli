@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/Kavirubc/wso2-amp-cli/internal/config"
+	"github.com/Kavirubc/wso2-amp-cli/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +19,12 @@ Examples:
   amp projects list --org default
   amp agents list --org default --project myproject
   amp config set default_org myorg`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// Show banner when no subcommand is provided
+		org := config.GetDefaultOrg()
+		project := config.GetDefaultProject()
+		fmt.Println(ui.RenderBanner(org, project))
+	},
 }
 
 // Execute runs the root command
