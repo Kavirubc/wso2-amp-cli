@@ -69,7 +69,7 @@ var (
 	KeyStyle = lipgloss.NewStyle().
 			Foreground(Teal500).
 			Bold(true).
-			Width(18)
+			Width(22)
 
 	// Value style for config values
 	ValueStyle = lipgloss.NewStyle().

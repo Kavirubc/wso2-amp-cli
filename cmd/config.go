@@ -15,9 +15,9 @@ var configCmd = &cobra.Command{
 
 Configuration is stored in ~/.amp/config.yaml
 Available keys:
-  api_url         - Base URL of the API server
-  api_key_header  - Header name for API key (default: X-API-Key)
-  api_key         - Your API key value
+  api_url         - Base URL of the API server (default: http://localhost:8080/api/v1)
+  api_key_header  - Auth header name (default: Authorization)
+  api_key         - Your JWT token (e.g., Bearer eyJ...)
   default_org     - Default organization name
   default_project - Default project name`,
 }

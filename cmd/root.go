@@ -7,14 +7,15 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "amp",
-	Short: "A simple CLI tool for managing WSO2 AI Agent Management Platform",
-	Long: `amp-cli lets you manage agents, builds, and deployments 
+	Short: "CLI for WSO2 AI Agent Management Platform",
+	Long: `amp-cli lets you manage organizations, projects, and agents
 from your terminal.
 
 Examples:
-  amp agents list
-  amp builds trigger --agent my-agent
-  amp deploy --agent my-agent --build latest`,
+  amp orgs list
+  amp projects list --org default
+  amp agents list --org default --project myproject
+  amp config set default_org myorg`,
 }
 
 // Execute runs the root command

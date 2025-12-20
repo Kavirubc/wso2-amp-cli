@@ -35,6 +35,9 @@ func RenderTableWithTitle(title string, headers []string, rows [][]string) strin
 
 // StatusCell returns a styled status string based on the status value
 func StatusCell(status string) string {
+	if status == "" {
+		return MutedStyle.Render("—")
+	}
 	switch status {
 	case "active", "running", "success", "healthy":
 		return SuccessStyle.Render(status)
