@@ -24,6 +24,10 @@ go build -o amp ./cmd/amp
 go install github.com/Kavirubc/wso2-amp-cli/cmd/amp@latest
 ```
 
+### Download Pre-built Binaries
+
+Download the latest release for your platform from the [Releases](https://github.com/Kavirubc/wso2-amp-cli/releases) page.
+
 ## Configuration
 
 Configure the CLI before first use:
@@ -47,7 +51,36 @@ Configuration is stored in `~/.amp/config.yaml`
 
 ## Usage
 
-### List Agents
+### Organizations
+
+```bash
+# List all organizations
+amp orgs list
+
+# Output as JSON
+amp orgs list --output json
+```
+
+### Projects
+
+```bash
+# List projects in an organization
+amp projects list --org myorg
+
+# Get project details
+amp projects get myproject --org myorg
+
+# Delete a project
+amp projects delete myproject --org myorg
+
+# Skip confirmation with --force
+amp projects delete myproject --org myorg --force
+
+# Output as JSON
+amp projects list --org myorg --output json
+```
+
+### Agents
 
 ```bash
 # Using flags
@@ -60,7 +93,7 @@ amp agents list
 amp agents list --output json
 ```
 
-### Configuration Commands
+### Configuration
 
 ```bash
 amp config list              # List all settings
@@ -72,6 +105,10 @@ amp config set api_url URL   # Set a setting
 
 | Command | Description |
 |---------|-------------|
+| `amp orgs list` | List all organizations |
+| `amp projects list` | List all projects in an organization |
+| `amp projects get` | Get details of a specific project |
+| `amp projects delete` | Delete a project |
 | `amp agents list` | List all agents in a project |
 | `amp config list` | Show all configuration |
 | `amp config set` | Set a configuration value |
@@ -84,6 +121,7 @@ amp config set api_url URL   # Set a setting
 | `--org` | `-o` | Organization name |
 | `--project` | `-p` | Project name |
 | `--output` | | Output format: `table` or `json` |
+| `--force` | `-f` | Skip confirmation prompts |
 
 ## Development
 
