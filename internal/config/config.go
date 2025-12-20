@@ -35,8 +35,8 @@ func Init() error {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(ConfigDir())  // Look in ~/.amp/
 	// Set default values
-	viper.SetDefault(KeyAPIURL, "http://localhost:8080")
-	viper.SetDefault(KeyAPIKeyHeader, "X-API-Key")
+	viper.SetDefault(KeyAPIURL, "http://localhost:8080/api/v1")
+	viper.SetDefault(KeyAPIKeyHeader, "Authorization")
 	viper.SetDefault(KeyAPIKeyValue, "")
 	viper.SetDefault(KeyDefaultOrg, "")
 	viper.SetDefault(KeyDefaultProj, "")
