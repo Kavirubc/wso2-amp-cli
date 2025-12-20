@@ -63,7 +63,7 @@ type AgentListResponse struct {
 // OrganizationListResponse wraps the paginated orgs response
 type OrganizationListResponse struct {
 	Organizations []OrganizationResponse `json:"organizations"`
-	Total         int                    `json:"total"`
 	Limit         int                    `json:"limit"`
 	Offset        int                    `json:"offset"`
+	Total         int                    `json:"total"`
 }
