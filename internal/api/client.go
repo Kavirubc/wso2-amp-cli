@@ -62,12 +62,12 @@ func (c *Client) ListOrganizations() ([]OrganizationResponse, error) {
 	}
 
 	// Decode JSON response into slice of OrganizationResponse
-	var orgs []OrganizationResponse
-	if err := json.NewDecoder(resp.Body).Decode(&orgs); err != nil {
+	var listResp OrganizationListResponse
+	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return orgs, nil
+	return listResp.Organizations, nil
 }
 
 // ==================== Projects ====================
