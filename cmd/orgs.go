@@ -43,7 +43,7 @@ var orgsListCmd = &cobra.Command{
 
 		if output == "json" {
 			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", " ")
+			encoder.SetIndent("", "  ")
 			return encoder.Encode(orgs)
 		}
 
