@@ -2,7 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/Kavirubc/wso2-amp-cli/internal/cli"
 	"github.com/Kavirubc/wso2-amp-cli/internal/config"
 	"github.com/Kavirubc/wso2-amp-cli/internal/ui"
 	"github.com/spf13/cobra"
@@ -20,10 +24,20 @@ Examples:
   amp agents list --org default --project myproject
   amp config set default_org myorg`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Show banner when no subcommand is provided
+		// Show banner
 		org := config.GetDefaultOrg()
 		project := config.GetDefaultProject()
 		fmt.Println(ui.RenderBanner(org, project))
+
+		// Start interactive mode
+		executor := cli.NewExecutor()
+		model := ui.NewInteractiveModel(executor.Execute)
+
+		p := tea.NewProgram(model)
+		if _, err := p.Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
