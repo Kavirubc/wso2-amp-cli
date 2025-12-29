@@ -37,9 +37,10 @@ type AgentTypeInfo struct {
 
 // RuntimeConfig holds runtime environment settings
 type RuntimeConfig struct {
-	Language        string `json:"language,omitempty"`
-	LanguageVersion string `json:"languageVersion,omitempty"`
-	RunCommand      string `json:"runCommand,omitempty"`
+	Language        string                `json:"language,omitempty"`
+	LanguageVersion string                `json:"languageVersion,omitempty"`
+	RunCommand      string                `json:"runCommand,omitempty"`
+	Env             []EnvironmentVariable `json:"env,omitempty"`
 }
 
 // OrganizationResponse represents an organization
@@ -143,4 +144,28 @@ type DeployAgentRequest struct {
 type EnvironmentVariable struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+// CreateAgentRequest for POST /orgs/{org}/projects/{proj}/agents
+type CreateAgentRequest struct {
+	Name           string          `json:"name"`
+	DisplayName    string          `json:"displayName"`
+	Description    string          `json:"description,omitempty"`
+	Provisioning   Provisioning    `json:"provisioning"`
+	AgentType      AgentTypeInfo   `json:"agentType"`
+	RuntimeConfigs *RuntimeConfig  `json:"runtimeConfigs,omitempty"`
+	InputInterface *InputInterface `json:"inputInterface,omitempty"`
+}
+
+// InputInterface defines the agent's input interface configuration
+type InputInterface struct {
+	Type     string        `json:"type"`
+	Port     int           `json:"port,omitempty"`
+	BasePath string        `json:"basePath,omitempty"`
+	Schema   *SchemaConfig `json:"schema,omitempty"`
+}
+
+// SchemaConfig holds OpenAPI schema configuration
+type SchemaConfig struct {
+	Path string `json:"path"`
 }

@@ -70,6 +70,12 @@ amp projects list --org myorg
 # Get project details
 amp projects get myproject --org myorg
 
+# Create a new project (interactive)
+amp projects create --org myorg
+
+# Create a project with flags
+amp projects create --org myorg --display-name "My Project" --pipeline default
+
 # Delete a project
 amp projects delete myproject --org myorg
 
@@ -83,14 +89,37 @@ amp projects list --org myorg --output json
 ### Agents
 
 ```bash
-# Using flags
+# List agents in a project
 amp agents list --org myorg --project myproject
 
-# Using defaults (if configured)
-amp agents list
+# Get agent details
+amp agents get myagent --org myorg --project myproject
+
+# Create a new agent (interactive)
+amp agents create --org myorg --project myproject
+
+# Create an external agent with flags
+amp agents create --display-name "My Agent" --provisioning external --org myorg --project myproject
+
+# Create an internal agent with flags
+amp agents create \
+  --display-name "My Python Agent" \
+  --provisioning internal \
+  --repo-url https://github.com/user/repo \
+  --branch main \
+  --language python \
+  --language-version 3.11 \
+  --subtype chat-api \
+  --org myorg --project myproject
+
+# Delete an agent
+amp agents delete myagent --org myorg --project myproject
+
+# Skip confirmation with --force
+amp agents delete myagent --org myorg --project myproject --force
 
 # Output as JSON
-amp agents list --output json
+amp agents get myagent --output json
 ```
 
 ### Configuration
@@ -107,21 +136,71 @@ amp config set api_url URL   # Set a setting
 |---------|-------------|
 | `amp orgs list` | List all organizations |
 | `amp projects list` | List all projects in an organization |
-| `amp projects get` | Get details of a specific project |
-| `amp projects delete` | Delete a project |
+| `amp projects get <name>` | Get details of a specific project |
+| `amp projects create` | Create a new project |
+| `amp projects delete <name>` | Delete a project |
 | `amp agents list` | List all agents in a project |
+| `amp agents get <name>` | Get details of a specific agent |
+| `amp agents create` | Create a new agent |
+| `amp agents delete <name>` | Delete an agent |
 | `amp config list` | Show all configuration |
-| `amp config set` | Set a configuration value |
-| `amp config get` | Get a configuration value |
+| `amp config set <key> <value>` | Set a configuration value |
+| `amp config get <key>` | Get a configuration value |
 
 ## Flags
+
+### Global Flags
 
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--org` | `-o` | Organization name |
 | `--project` | `-p` | Project name |
 | `--output` | | Output format: `table` or `json` |
+
+### Command-Specific Flags
+
+#### `projects create`
+| Flag | Description |
+|------|-------------|
+| `--name` | Project name (auto-generated if not provided) |
+| `--display-name` | Display name for the project |
+| `--description` | Project description |
+| `--pipeline` | Deployment pipeline name |
+
+#### `agents create`
+| Flag | Description |
+|------|-------------|
+| `--name` | Agent name (auto-generated if not provided) |
+| `--display-name` | Display name for the agent |
+| `--description` | Agent description |
+| `--provisioning` | Provisioning type: `internal` or `external` |
+| `--repo-url` | Repository URL (for internal agents) |
+| `--branch` | Git branch (default: main) |
+| `--app-path` | App path in repository (default: /) |
+| `--subtype` | Agent subtype: `chat-api` or `custom-api` |
+| `--language` | Programming language (python, nodejs, java, go, ballerina) |
+| `--language-version` | Language version |
+
+#### Delete Commands
+| Flag | Short | Description |
+|------|-------|-------------|
 | `--force` | `-f` | Skip confirmation prompts |
+
+## Interactive Mode
+
+Running `amp` without arguments launches an interactive shell:
+
+```bash
+$ amp
+╭─────────────────────────────────────────────────────────╮
+│                    WSO2 AMP CLI                         │
+│          AI Agent Management Platform                   │
+╰─────────────────────────────────────────────────────────╯
+
+amp> orgs list
+amp> projects list
+amp> exit
+```
 
 ## Development
 
@@ -134,6 +213,9 @@ go build -o amp ./cmd/amp
 
 # Run tests
 go test ./...
+
+# Vet
+go vet ./...
 ```
 
 ## License
