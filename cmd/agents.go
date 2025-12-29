@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Kavirubc/wso2-amp-cli/internal/api"
@@ -254,12 +256,368 @@ func printAgentRow(key, value string) {
 	fmt.Printf("  %s  %s\n", ui.KeyStyle.Render(key), ui.ValueStyle.Render(value))
 }
 
+var agentsCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new agent",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		reader := bufio.NewReader(os.Stdin)
+
+		// Get flags
+		org, _ := cmd.Flags().GetString("org")
+		project, _ := cmd.Flags().GetString("project")
+		name, _ := cmd.Flags().GetString("name")
+		displayName, _ := cmd.Flags().GetString("display-name")
+		description, _ := cmd.Flags().GetString("description")
+		provisioning, _ := cmd.Flags().GetString("provisioning")
+		repoURL, _ := cmd.Flags().GetString("repo-url")
+		branch, _ := cmd.Flags().GetString("branch")
+		appPath, _ := cmd.Flags().GetString("app-path")
+		subtype, _ := cmd.Flags().GetString("subtype")
+		language, _ := cmd.Flags().GetString("language")
+		languageVersion, _ := cmd.Flags().GetString("language-version")
+		output, _ := cmd.Flags().GetString("output")
+
+		// Use defaults from config if not provided
+		if org == "" {
+			org = config.GetDefaultOrg()
+		}
+		if project == "" {
+			project = config.GetDefaultProject()
+		}
+
+		// Validate required fields
+		if org == "" {
+			return fmt.Errorf("organization is required. Use --org flag or set default with: amp config set default_org <name>")
+		}
+		if project == "" {
+			return fmt.Errorf("project is required. Use --project flag or set default with: amp config set default_project <name>")
+		}
+
+		// Interactive mode: prompt for missing required fields
+		if displayName == "" {
+			fmt.Println(ui.TitleStyle.Render(fmt.Sprintf("%s Create New Agent", ui.IconAgent)))
+			fmt.Println()
+			fmt.Print("? Display name: ")
+			input, _ := reader.ReadString('\n')
+			displayName = strings.TrimSpace(input)
+			if displayName == "" {
+				return fmt.Errorf("display name is required")
+			}
+		}
+
+		// Prompt for description if not provided
+		if description == "" && !cmd.Flags().Changed("description") {
+			fmt.Print("? Description (optional): ")
+			input, _ := reader.ReadString('\n')
+			description = strings.TrimSpace(input)
+		}
+
+		// Prompt for provisioning type if not provided
+		if provisioning == "" {
+			provOptions := []string{"internal", "external"}
+			provDescs := []string{"Platform-hosted agent", "Self-hosted agent"}
+			fmt.Println("? Provisioning type:")
+			for i, opt := range provOptions {
+				fmt.Printf("  %d. %s - %s\n", i+1, opt, provDescs[i])
+			}
+			fmt.Print("Enter selection [1]: ")
+			input, _ := reader.ReadString('\n')
+			input = strings.TrimSpace(input)
+
+			selection := 1
+			if input != "" {
+				sel, err := strconv.Atoi(input)
+				if err != nil || sel < 1 || sel > len(provOptions) {
+					return fmt.Errorf("invalid selection: %s", input)
+				}
+				selection = sel
+			}
+			provisioning = provOptions[selection-1]
+		}
+
+		// For internal provisioning, gather repository and runtime details
+		var repoConfig *api.RepositoryConfig
+		var runtimeConfig *api.RuntimeConfig
+
+		if provisioning == "internal" {
+			// Repository URL
+			if repoURL == "" {
+				fmt.Print("? Repository URL (https://github.com/owner/repo): ")
+				input, _ := reader.ReadString('\n')
+				repoURL = strings.TrimSpace(input)
+				if repoURL == "" {
+					return fmt.Errorf("repository URL is required for internal agents")
+				}
+			}
+
+			// Branch
+			if branch == "" {
+				fmt.Print("? Branch [main]: ")
+				input, _ := reader.ReadString('\n')
+				branch = strings.TrimSpace(input)
+				if branch == "" {
+					branch = "main"
+				}
+			}
+
+			// App path
+			if appPath == "" {
+				fmt.Print("? App path [/]: ")
+				input, _ := reader.ReadString('\n')
+				appPath = strings.TrimSpace(input)
+				if appPath == "" {
+					appPath = "/"
+				}
+			}
+
+			repoConfig = &api.RepositoryConfig{
+				URL:     repoURL,
+				Branch:  branch,
+				AppPath: appPath,
+			}
+
+			// Agent subtype
+			if subtype == "" {
+				subtypeOptions := []string{"chat-api", "custom-api"}
+				subtypeDescs := []string{"Conversational chat agent", "Custom API agent"}
+				fmt.Println("? Agent subtype:")
+				for i, opt := range subtypeOptions {
+					fmt.Printf("  %d. %s - %s\n", i+1, opt, subtypeDescs[i])
+				}
+				fmt.Print("Enter selection [1]: ")
+				input, _ := reader.ReadString('\n')
+				input = strings.TrimSpace(input)
+
+				selection := 1
+				if input != "" {
+					sel, err := strconv.Atoi(input)
+					if err != nil || sel < 1 || sel > len(subtypeOptions) {
+						return fmt.Errorf("invalid selection: %s", input)
+					}
+					selection = sel
+				}
+				subtype = subtypeOptions[selection-1]
+			}
+
+			// Language selection
+			if language == "" {
+				langOptions := []string{"python", "nodejs", "java", "go", "ballerina"}
+				fmt.Println("? Language:")
+				for i, opt := range langOptions {
+					fmt.Printf("  %d. %s\n", i+1, opt)
+				}
+				fmt.Print("Enter selection [1]: ")
+				input, _ := reader.ReadString('\n')
+				input = strings.TrimSpace(input)
+
+				selection := 1
+				if input != "" {
+					sel, err := strconv.Atoi(input)
+					if err != nil || sel < 1 || sel > len(langOptions) {
+						return fmt.Errorf("invalid selection: %s", input)
+					}
+					selection = sel
+				}
+				language = langOptions[selection-1]
+			}
+
+			// Language version (not required for ballerina)
+			if languageVersion == "" && language != "ballerina" {
+				defaultVersion := getDefaultVersion(language)
+				fmt.Printf("? Language version [%s]: ", defaultVersion)
+				input, _ := reader.ReadString('\n')
+				languageVersion = strings.TrimSpace(input)
+				if languageVersion == "" {
+					languageVersion = defaultVersion
+				}
+			}
+
+			runtimeConfig = &api.RuntimeConfig{
+				Language:        language,
+				LanguageVersion: languageVersion,
+			}
+		}
+
+		// Build InputInterface for internal agents
+		var inputInterface *api.InputInterface
+		if provisioning == "internal" {
+			inputInterface = &api.InputInterface{
+				Type:     "HTTP",
+				Port:     8080,
+				BasePath: "/",
+			}
+
+			// For custom-api, prompt for additional details
+			if subtype == "custom-api" {
+				// Port
+				fmt.Print("? HTTP Port [8080]: ")
+				input, _ := reader.ReadString('\n')
+				input = strings.TrimSpace(input)
+				if input != "" {
+					port, err := strconv.Atoi(input)
+					if err != nil || port < 1 || port > 65535 {
+						return fmt.Errorf("invalid port: %s", input)
+					}
+					inputInterface.Port = port
+				}
+
+				// Base path
+				fmt.Print("? Base path [/]: ")
+				input, _ = reader.ReadString('\n')
+				input = strings.TrimSpace(input)
+				if input != "" {
+					inputInterface.BasePath = input
+				}
+
+				// Schema path (required for custom-api)
+				fmt.Print("? OpenAPI schema path (e.g., /openapi.yaml): ")
+				input, _ = reader.ReadString('\n')
+				schemaPath := strings.TrimSpace(input)
+				if schemaPath == "" {
+					return fmt.Errorf("schema path is required for custom-api agents")
+				}
+				inputInterface.Schema = &api.SchemaConfig{Path: schemaPath}
+			}
+		}
+
+		// Generate name from display name if not provided
+		if name == "" {
+			name = generateAgentName(displayName)
+			if name == "" {
+				return fmt.Errorf("could not generate valid agent name from '%s'. Please provide a name with --name flag", displayName)
+			}
+		}
+
+		// Build request
+		req := api.CreateAgentRequest{
+			Name:        name,
+			DisplayName: displayName,
+			Description: description,
+			Provisioning: api.Provisioning{
+				Type:       provisioning,
+				Repository: repoConfig,
+			},
+			AgentType: api.AgentTypeInfo{
+				Type:    "api",
+				SubType: subtype,
+			},
+			RuntimeConfigs: runtimeConfig,
+			InputInterface: inputInterface,
+		}
+
+		fmt.Println()
+		fmt.Println("Creating agent...")
+
+		// Create API client
+		client := api.NewClient(
+			config.GetAPIURL(),
+			config.GetAPIKeyHeader(),
+			config.GetAPIKeyValue(),
+		)
+
+		// Create agent
+		agent, err := client.CreateAgent(org, project, req)
+		if err != nil {
+			return fmt.Errorf("failed to create agent: %w", err)
+		}
+
+		// JSON output
+		if output == "json" {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(agent)
+		}
+
+		// Success output
+		fmt.Println()
+		fmt.Println(ui.RenderSuccess("Agent created successfully!"))
+		fmt.Println()
+		printAgentRow("Name:", agent.Name)
+		printAgentRow("Display Name:", agent.DisplayName)
+		printAgentRow("Provisioning:", provisioning)
+		if provisioning == "internal" && runtimeConfig != nil {
+			langInfo := runtimeConfig.Language
+			if runtimeConfig.LanguageVersion != "" {
+				langInfo += " " + runtimeConfig.LanguageVersion
+			}
+			printAgentRow("Language:", langInfo)
+		}
+		fmt.Println()
+
+		// Show next steps
+		fmt.Println(ui.SubtitleStyle.Render("Next steps:"))
+		fmt.Printf("  • Trigger a build: amp builds trigger --agent %s\n", agent.Name)
+		fmt.Printf("  • View agent: amp agents get %s\n", agent.Name)
+		fmt.Println()
+
+		return nil
+	},
+}
+
+// generateAgentName converts display name to valid agent name (max 25 chars)
+func generateAgentName(displayName string) string {
+	// Lowercase and replace spaces with hyphens
+	name := strings.ToLower(displayName)
+	name = strings.ReplaceAll(name, " ", "-")
+
+	// Remove special characters (keep only alphanumeric and hyphens)
+	reg := regexp.MustCompile(`[^a-z0-9-]`)
+	name = reg.ReplaceAllString(name, "")
+
+	// Remove consecutive hyphens
+	reg = regexp.MustCompile(`-+`)
+	name = reg.ReplaceAllString(name, "-")
+
+	// Trim hyphens from start and end
+	name = strings.Trim(name, "-")
+
+	// Ensure starts with a letter (required by API)
+	if len(name) > 0 && (name[0] < 'a' || name[0] > 'z') {
+		name = "a" + name
+	}
+
+	// Truncate to 25 characters (API limit)
+	if len(name) > 25 {
+		name = name[:25]
+		name = strings.TrimRight(name, "-")
+	}
+
+	return name
+}
+
+// getDefaultVersion returns the default version for a given language
+func getDefaultVersion(language string) string {
+	defaults := map[string]string{
+		"python": "3.11",
+		"nodejs": "20.x.x",
+		"java":   "21",
+		"go":     "1.x",
+	}
+	if v, ok := defaults[language]; ok {
+		return v
+	}
+	return ""
+}
+
 func init() {
 	rootCmd.AddCommand(agentsCmd)
 	agentsCmd.AddCommand(agentsListCmd)
 	agentsCmd.AddCommand(agentsGetCmd)
 	agentsCmd.AddCommand(agentsDeleteCmd)
+	agentsCmd.AddCommand(agentsCreateCmd)
 
 	// Add --force flag to delete command
 	agentsDeleteCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")
+
+	// Add flags for create command
+	agentsCreateCmd.Flags().String("name", "", "Agent name (auto-generated if not provided)")
+	agentsCreateCmd.Flags().String("display-name", "", "Display name for the agent")
+	agentsCreateCmd.Flags().String("description", "", "Agent description")
+	agentsCreateCmd.Flags().String("provisioning", "", "Provisioning type (internal/external)")
+	agentsCreateCmd.Flags().String("repo-url", "", "Repository URL (for internal agents)")
+	agentsCreateCmd.Flags().String("branch", "", "Git branch (default: main)")
+	agentsCreateCmd.Flags().String("app-path", "", "App path in repository (default: /)")
+	agentsCreateCmd.Flags().String("subtype", "", "Agent subtype (chat-api/custom-api)")
+	agentsCreateCmd.Flags().String("language", "", "Programming language")
+	agentsCreateCmd.Flags().String("language-version", "", "Language version")
 }
