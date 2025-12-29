@@ -76,6 +76,23 @@ type OrganizationListResponse struct {
 	Total         int                    `json:"total"`
 }
 
+// DeploymentPipelineResponse represents a deployment pipeline
+type DeploymentPipelineResponse struct {
+	Name        string    `json:"name"`
+	DisplayName string    `json:"displayName,omitempty"`
+	Description string    `json:"description,omitempty"`
+	OrgName     string    `json:"orgName"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
+// DeploymentPipelineListResponse wraps paginated pipelines response
+type DeploymentPipelineListResponse struct {
+	DeploymentPipelines []DeploymentPipelineResponse `json:"deploymentPipelines"`
+	Limit               int                          `json:"limit"`
+	Offset              int                          `json:"offset"`
+	Total               int                          `json:"total"`
+}
+
 // --- Request Types ---
 
 // CreateProjectRequest for POST /orgs/{org}/projects
