@@ -3,13 +3,43 @@ package api
 import "time"
 
 type AgentResponse struct {
-	UUID        string    `json:"uuid,omitempty"`
-	Name        string    `json:"name"`
-	DisplayName string    `json:"displayName,omitempty"`
-	Description string    `json:"description,omitempty"`
-	ProjectName string    `json:"projectName"`
-	Status      string    `json:"status,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
+	UUID           string         `json:"uuid,omitempty"`
+	Name           string         `json:"name"`
+	DisplayName    string         `json:"displayName,omitempty"`
+	Description    string         `json:"description,omitempty"`
+	ProjectName    string         `json:"projectName"`
+	Status         string         `json:"status,omitempty"`
+	CreatedAt      time.Time      `json:"createdAt"`
+	Provisioning   *Provisioning  `json:"provisioning,omitempty"`
+	AgentType      *AgentTypeInfo `json:"agentType,omitempty"`
+	RuntimeConfigs *RuntimeConfig `json:"runtimeConfigs,omitempty"`
+	Language       string         `json:"language,omitempty"`
+}
+
+// Provisioning contains agent source configuration
+type Provisioning struct {
+	Type       string            `json:"type"`
+	Repository *RepositoryConfig `json:"repository,omitempty"`
+}
+
+// RepositoryConfig holds git repository details for agent source
+type RepositoryConfig struct {
+	URL     string `json:"url"`
+	Branch  string `json:"branch"`
+	AppPath string `json:"appPath,omitempty"`
+}
+
+// AgentTypeInfo describes the agent's type classification
+type AgentTypeInfo struct {
+	Type    string `json:"type"`
+	SubType string `json:"subType,omitempty"`
+}
+
+// RuntimeConfig holds runtime environment settings
+type RuntimeConfig struct {
+	Language        string `json:"language,omitempty"`
+	LanguageVersion string `json:"languageVersion,omitempty"`
+	RunCommand      string `json:"runCommand,omitempty"`
 }
 
 // OrganizationResponse represents an organization
