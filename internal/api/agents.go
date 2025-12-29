@@ -52,3 +52,9 @@ func (c *Client) GetAgent(orgName, projectName, agentName string) (*AgentRespons
 
 	return &agent, nil // Return pointer to the agent
 }
+
+// DeleteAgent deletes an agent from a project
+func (c *Client) DeleteAgent(orgName, projectName, agentName string) error {
+	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName
+	return c.doDelete(path)
+}

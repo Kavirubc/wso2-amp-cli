@@ -1,6 +1,10 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -40,4 +44,44 @@ func (c *Client) doRequest(method, path string) (*http.Response, error) {
 	req.Header.Set("Accept", "application/json")
 
 	return c.HTTPClient.Do(req)
+}
+
+// doRequestWithBody performs an HTTP request with a JSON body
+func (c *Client) doRequestWithBody(method, path string, body interface{}) (*http.Response, error) {
+	url := c.BaseURL + path
+
+	var reqBody io.Reader
+	if body != nil {
+		jsonBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+		reqBody = bytes.NewBuffer(jsonBody)
+	}
+
+	req, err := http.NewRequest(method, url, reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set(c.APIKeyHeader, c.APIKeyValue)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	return c.HTTPClient.Do(req)
+}
+
+// doDelete performs a DELETE request and handles common response codes
+func (c *Client) doDelete(path string) error {
+	resp, err := c.doRequest("DELETE", path)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+	return nil
 }
