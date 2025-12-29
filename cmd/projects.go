@@ -279,6 +279,9 @@ var projectsCreateCmd = &cobra.Command{
 		// Generate name from display name if not provided
 		if name == "" {
 			name = generateProjectName(displayName)
+			if name == "" {
+				return fmt.Errorf("could not generate valid project name from '%s'. Please provide a name with --name flag", displayName)
+			}
 		}
 
 		// Build request
