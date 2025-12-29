@@ -80,17 +80,5 @@ func (c *Client) GetProject(orgName, projectName string) (*ProjectResponse, erro
 // DeleteProject deletes a project
 func (c *Client) DeleteProject(orgName, projectName string) error {
 	path := "/orgs/" + orgName + "/projects/" + projectName
-
-	resp, err := c.doRequest("DELETE", path)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
-	}
-
-	return nil
+	return c.doDelete(path)
 }
