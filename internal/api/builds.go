@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // TriggerBuild triggers a new build for an agent
 func (c *Client) TriggerBuild(orgName, projectName, agentName, commitID string) (*BuildResponse, error) {
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/builds"
 	if commitID != "" {
-		path += "?commitId=" + commitID
+		path += "?commitId=" + url.QueryEscape(commitID)
 	}
 
 	resp, err := c.doRequestWithBody("POST", path, nil)
