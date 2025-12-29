@@ -75,3 +75,25 @@ type OrganizationListResponse struct {
 	Offset        int                    `json:"offset"`
 	Total         int                    `json:"total"`
 }
+
+// --- Request Types ---
+
+// CreateProjectRequest for POST /orgs/{org}/projects
+type CreateProjectRequest struct {
+	Name               string  `json:"name"`
+	DisplayName        string  `json:"displayName"`
+	Description        *string `json:"description,omitempty"`
+	DeploymentPipeline string  `json:"deploymentPipeline"`
+}
+
+// DeployAgentRequest for POST /orgs/{org}/projects/{proj}/agents/{agent}/deployments
+type DeployAgentRequest struct {
+	ImageId string                `json:"imageId"`
+	Env     []EnvironmentVariable `json:"env,omitempty"`
+}
+
+// EnvironmentVariable represents a key-value pair for deployment config
+type EnvironmentVariable struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
