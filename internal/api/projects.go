@@ -7,6 +7,30 @@ import (
 	"net/http"
 )
 
+// CreateProject creates a new project in an organization
+func (c *Client) CreateProject(orgName string, req CreateProjectRequest) (*ProjectResponse, error) {
+	path := "/orgs/" + orgName + "/projects"
+
+	resp, err := c.doRequestWithBody("POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Backend returns 202 Accepted for async operations
+	if resp.StatusCode != http.StatusAccepted && resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var project ProjectResponse
+	if err := json.NewDecoder(resp.Body).Decode(&project); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &project, nil
+}
+
 // ListProjects fetches all projects in an organization
 func (c *Client) ListProjects(orgName string) ([]ProjectResponse, error) {
 	path := "/orgs/" + orgName + "/projects"
