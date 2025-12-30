@@ -314,13 +314,24 @@ var buildsLogsCmd = &cobra.Command{
 
 		// Print each log entry with timestamp and level
 		for _, entry := range logs.Logs {
-			// Extract time from timestamp (format: "2024-01-15T14:30:05Z")
+			// Parse and format timestamp (expected RFC3339 format)
 			timestamp := entry.Timestamp
-			if strings.Contains(timestamp, "T") {
-				parts := strings.Split(timestamp, "T")
-				if len(parts) > 1 {
-					timePart := strings.Split(parts[1], ".")[0] // Remove milliseconds if present
-					timePart = strings.Split(timePart, "Z")[0]  // Remove Z
+			if t, err := time.Parse(time.RFC3339, entry.Timestamp); err == nil {
+				// Format as HH:MM:SS
+				timestamp = t.Format("15:04:05")
+			} else if strings.Contains(timestamp, "T") {
+				// Fallback: best-effort extraction for non-RFC3339 timestamps
+				parts := strings.SplitN(timestamp, "T", 2)
+				if len(parts) == 2 {
+					timePart := parts[1]
+					// Strip trailing 'Z' if present
+					if idx := strings.Index(timePart, "Z"); idx != -1 {
+						timePart = timePart[:idx]
+					}
+					// Strip fractional seconds if present
+					if idx := strings.Index(timePart, "."); idx != -1 {
+						timePart = timePart[:idx]
+					}
 					timestamp = timePart
 				}
 			}
@@ -366,9 +377,9 @@ func truncateCommit(commit string) string {
 	return commit
 }
 
-// formatLogLevel returns a styled prefix for log level
+// formatLogLevel returns a styled prefix for log level (case-insensitive)
 func formatLogLevel(level string) string {
-	switch level {
+	switch strings.ToLower(level) {
 	case "error":
 		return ui.ErrorStyle.Render("[ERROR]")
 	case "warning":
