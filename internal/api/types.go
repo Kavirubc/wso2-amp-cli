@@ -82,6 +82,37 @@ type BuildResponse struct {
 	EndedAt     *time.Time `json:"endedAt,omitempty"`
 }
 
+// BuildDetailsResponse extends BuildResponse with step information and progress
+type BuildDetailsResponse struct {
+	BuildResponse              // Embed base build fields
+	Percent         float64     `json:"percent,omitempty"`
+	Steps           []BuildStep `json:"steps,omitempty"`
+	DurationSeconds int         `json:"durationSeconds,omitempty"`
+}
+
+// BuildStep represents a single step in the build process
+type BuildStep struct {
+	Type       string `json:"type"`
+	Status     string `json:"status"`
+	Message    string `json:"message"`
+	StartedAt  string `json:"startedAt,omitempty"`
+	FinishedAt string `json:"finishedAt,omitempty"`
+}
+
+// BuildLogsResponse contains build logs with metadata
+type BuildLogsResponse struct {
+	Logs       []LogEntry `json:"logs"`
+	TotalCount int        `json:"totalCount"`
+	TookMs     float64    `json:"tookMs"`
+}
+
+// LogEntry represents a single log line
+type LogEntry struct {
+	Timestamp string `json:"timestamp"`
+	Log       string `json:"log"`
+	LogLevel  string `json:"logLevel"`
+}
+
 // DeploymentResponse represents a deployment
 type DeploymentResponse struct {
 	AgentName      string    `json:"agentName"`
