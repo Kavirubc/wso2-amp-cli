@@ -57,8 +57,8 @@ func (c *Client) ListBuilds(orgName, projectName, agentName string) ([]BuildResp
 	return builds, nil
 }
 
-// GetBuild fetches a specific build
-func (c *Client) GetBuild(orgName, projectName, agentName, buildName string) (*BuildResponse, error) {
+// GetBuild fetches a specific build with detailed information
+func (c *Client) GetBuild(orgName, projectName, agentName, buildName string) (*BuildDetailsResponse, error) {
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/builds/" + buildName
 
 	resp, err := c.doRequest("GET", path)
@@ -72,10 +72,33 @@ func (c *Client) GetBuild(orgName, projectName, agentName, buildName string) (*B
 		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	var build BuildResponse
+	var build BuildDetailsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&build); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	return &build, nil
+}
+
+// GetBuildLogs fetches logs for a specific build
+func (c *Client) GetBuildLogs(orgName, projectName, agentName, buildName string) (*BuildLogsResponse, error) {
+	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/builds/" + buildName + "/build-logs"
+
+	resp, err := c.doRequest("GET", path)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var logs BuildLogsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&logs); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &logs, nil
 }
