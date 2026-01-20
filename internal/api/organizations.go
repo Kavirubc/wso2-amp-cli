@@ -29,3 +29,24 @@ func (c *Client) ListOrganizations() ([]OrganizationResponse, error) {
 
 	return listResp.Organizations, nil
 }
+
+// GetOrganization fetches a single organization by name
+func (c *Client) GetOrganization(orgName string) (*OrganizationResponse, error) {
+	resp, err := c.doRequest("GET", "/orgs/"+orgName)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var org OrganizationResponse
+	if err := json.NewDecoder(resp.Body).Decode(&org); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &org, nil
+}
