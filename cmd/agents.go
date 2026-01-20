@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Kavirubc/wso2-amp-cli/internal/api"
 	"github.com/Kavirubc/wso2-amp-cli/internal/config"
@@ -189,6 +190,99 @@ var agentsGetCmd = &cobra.Command{
 		}
 
 		fmt.Println()
+		return nil
+	},
+}
+
+var agentsTokenCmd = &cobra.Command{
+	Use:   "token",
+	Short: "Generate a JWT token for an agent",
+	Long: `Generate a JWT token that allows an agent to authenticate with AMP.
+
+This command requests a signed token for the specified agent in a given
+organization and project. The token can then be used by the agent to
+connect to AMP and perform actions permitted by its configuration.
+
+The generated token is sensitive credential material:
+  - Treat it like a password or API key
+  - Store it securely (e.g., in a secrets manager)
+  - Do not commit it to version control
+  - Prefer shorter expiration times where possible
+
+Once generated, the token will only be displayed once.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Get flags
+		org, _ := cmd.Flags().GetString("org")
+		project, _ := cmd.Flags().GetString("project")
+		agentName, _ := cmd.Flags().GetString("agent")
+		expiresIn, _ := cmd.Flags().GetString("expires-in")
+		output, _ := cmd.Flags().GetString("output")
+
+		// Use defaults from config if not provided
+		if org == "" {
+			org = config.GetDefaultOrg()
+		}
+		if project == "" {
+			project = config.GetDefaultProject()
+		}
+
+		// Validate required fields
+		if org == "" {
+			return fmt.Errorf("organization is required. Use --org flag or set default with: amp config set default_org <name>")
+		}
+		if project == "" {
+			return fmt.Errorf("project is required. Use --project flag or set default with: amp config set default_project <name>")
+		}
+		if agentName == "" {
+			return fmt.Errorf("agent name is required. Use --agent flag")
+		}
+
+		// Create API client
+		client := api.NewClient(
+			config.GetAPIURL(),
+			config.GetAPIKeyHeader(),
+			config.GetAPIKeyValue(),
+		)
+
+		// Build token request
+		req := &api.TokenRequest{}
+		if expiresIn != "" {
+			req.ExpiresIn = expiresIn
+		}
+
+		// Generate token
+		tokenResp, err := client.GenerateAgentToken(org, project, agentName, req)
+		if err != nil {
+			return fmt.Errorf("failed to generate token: %w", err)
+		}
+
+		// JSON output
+		if output == "json" {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(tokenResp)
+		}
+
+		// Format timestamps
+		issuedAt := time.Unix(tokenResp.IssuedAt, 0)
+		expiresAt := time.Unix(tokenResp.ExpiresAt, 0)
+
+		// Pretty print token details
+		fmt.Println(ui.TitleStyle.Render("🔐 Agent Token Generated"))
+		fmt.Println()
+		printAgentRow("Agent:", agentName)
+		printAgentRow("Project:", project)
+		printAgentRow("Token Type:", tokenResp.TokenType)
+		printAgentRow("Issued At:", issuedAt.Format("2006-01-02 15:04:05"))
+		printAgentRow("Expires At:", expiresAt.Format("2006-01-02 15:04:05"))
+		fmt.Println()
+		fmt.Println(ui.SubtitleStyle.Render("  Token:"))
+		fmt.Printf("  %s\n", tokenResp.Token)
+		fmt.Println()
+		fmt.Println(ui.RenderWarning("Store this token securely. It will not be shown again."))
+		fmt.Println(ui.RenderInfo("Tip: Use --output json and redirect to a file for secure storage:"))
+		fmt.Printf("  amp agents token --agent %s --output json > token.json\n", agentName)
+
 		return nil
 	},
 }
@@ -603,8 +697,13 @@ func init() {
 	rootCmd.AddCommand(agentsCmd)
 	agentsCmd.AddCommand(agentsListCmd)
 	agentsCmd.AddCommand(agentsGetCmd)
+	agentsCmd.AddCommand(agentsTokenCmd)
 	agentsCmd.AddCommand(agentsDeleteCmd)
 	agentsCmd.AddCommand(agentsCreateCmd)
+
+	// Add flags for token command
+	agentsTokenCmd.Flags().StringP("agent", "a", "", "Agent name (required)")
+	agentsTokenCmd.Flags().String("expires-in", "", "Token expiry duration (e.g., 720h for 30 days)")
 
 	// Add --force flag to delete command
 	agentsDeleteCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")

@@ -200,3 +200,16 @@ type InputInterface struct {
 type SchemaConfig struct {
 	Path string `json:"path"`
 }
+
+// TokenRequest for POST /orgs/{org}/projects/{proj}/agents/{agent}/token
+type TokenRequest struct {
+	ExpiresIn string `json:"expiresIn,omitempty"`
+}
+
+// TokenResponse represents a generated agent token
+type TokenResponse struct {
+	Token     string `json:"token"`
+	ExpiresAt int64  `json:"expiresAt"`
+	IssuedAt  int64  `json:"issuedAt"`
+	TokenType string `json:"tokenType"`
+}
