@@ -197,6 +197,19 @@ var agentsGetCmd = &cobra.Command{
 var agentsTokenCmd = &cobra.Command{
 	Use:   "token",
 	Short: "Generate a JWT token for an agent",
+	Long: `Generate a JWT token that allows an agent to authenticate with AMP.
+
+This command requests a signed token for the specified agent in a given
+organization and project. The token can then be used by the agent to
+connect to AMP and perform actions permitted by its configuration.
+
+The generated token is sensitive credential material:
+  - Treat it like a password or API key
+  - Store it securely (e.g., in a secrets manager)
+  - Do not commit it to version control
+  - Prefer shorter expiration times where possible
+
+Once generated, the token will only be displayed once.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get flags
 		org, _ := cmd.Flags().GetString("org")
@@ -267,6 +280,8 @@ var agentsTokenCmd = &cobra.Command{
 		fmt.Printf("  %s\n", tokenResp.Token)
 		fmt.Println()
 		fmt.Println(ui.RenderWarning("Store this token securely. It will not be shown again."))
+		fmt.Println(ui.RenderInfo("Tip: Use --output json and redirect to a file for secure storage:"))
+		fmt.Printf("  amp agents token --agent %s --output json > token.json\n", agentName)
 
 		return nil
 	},
