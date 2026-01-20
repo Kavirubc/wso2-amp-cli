@@ -82,3 +82,26 @@ func (c *Client) CreateAgent(orgName, projectName string, req CreateAgentRequest
 
 	return &agent, nil
 }
+
+// GenerateAgentToken generates a JWT token for an agent
+func (c *Client) GenerateAgentToken(orgName, projectName, agentName string, req *TokenRequest) (*TokenResponse, error) {
+	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/token"
+
+	resp, err := c.doRequestWithBody("POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var tokenResp TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &tokenResp, nil
+}
