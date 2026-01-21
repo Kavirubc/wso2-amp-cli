@@ -81,7 +81,7 @@ func (c *Client) GetBuild(orgName, projectName, agentName, buildName string) (*B
 }
 
 // GetBuildLogs fetches logs for a specific build
-func (c *Client) GetBuildLogs(orgName, projectName, agentName, buildName string) (*BuildLogsResponse, error) {
+func (c *Client) GetBuildLogs(orgName, projectName, agentName, buildName string) (*LogsResponse, error) {
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/builds/" + buildName + "/build-logs"
 
 	resp, err := c.doRequest("GET", path)
@@ -95,7 +95,7 @@ func (c *Client) GetBuildLogs(orgName, projectName, agentName, buildName string)
 		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	var logs BuildLogsResponse
+	var logs LogsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&logs); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

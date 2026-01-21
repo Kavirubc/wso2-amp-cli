@@ -99,8 +99,8 @@ type BuildStep struct {
 	FinishedAt string `json:"finishedAt,omitempty"`
 }
 
-// BuildLogsResponse contains build logs with metadata
-type BuildLogsResponse struct {
+// LogsResponse contains logs with metadata (used for both build and runtime logs)
+type LogsResponse struct {
 	Logs       []LogEntry `json:"logs"`
 	TotalCount int        `json:"totalCount"`
 	TookMs     float64    `json:"tookMs"`
@@ -212,4 +212,15 @@ type TokenResponse struct {
 	ExpiresAt int64  `json:"expiresAt"`
 	IssuedAt  int64  `json:"issuedAt"`
 	TokenType string `json:"tokenType"`
+}
+
+// RuntimeLogRequest for POST /orgs/{org}/projects/{proj}/agents/{agent}/logs
+type RuntimeLogRequest struct {
+	EnvironmentName string   `json:"environmentName"`
+	StartTime       string   `json:"startTime,omitempty"`
+	EndTime         string   `json:"endTime,omitempty"`
+	Limit           int      `json:"limit,omitempty"`
+	SortOrder       string   `json:"sortOrder,omitempty"`
+	LogLevels       []string `json:"logLevels,omitempty"`
+	SearchPhrase    string   `json:"searchPhrase,omitempty"`
 }

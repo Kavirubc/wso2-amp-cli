@@ -693,6 +693,170 @@ func getDefaultVersion(language string) string {
 	return ""
 }
 
+var agentsLogsCmd = &cobra.Command{
+	Use:   "logs",
+	Short: "View runtime logs for a deployed agent",
+	Long: `Fetch and display runtime logs from a deployed agent.
+
+Examples:
+  amp agents logs --agent myagent --env development
+  amp agents logs --agent myagent --env dev --since 1h
+  amp agents logs --agent myagent --env dev --level ERROR,WARN
+  amp agents logs --agent myagent --env dev --search "connection failed"
+  amp agents logs --agent myagent --env dev --output json`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Get flags
+		org, _ := cmd.Flags().GetString("org")
+		project, _ := cmd.Flags().GetString("project")
+		agentName, _ := cmd.Flags().GetString("agent")
+		envName, _ := cmd.Flags().GetString("env")
+		since, _ := cmd.Flags().GetString("since")
+		level, _ := cmd.Flags().GetString("level")
+		search, _ := cmd.Flags().GetString("search")
+		limit, _ := cmd.Flags().GetInt("limit")
+		sort, _ := cmd.Flags().GetString("sort")
+		output, _ := cmd.Flags().GetString("output")
+
+		// Use defaults from config if not provided
+		if org == "" {
+			org = config.GetDefaultOrg()
+		}
+		if project == "" {
+			project = config.GetDefaultProject()
+		}
+
+		// Validate required fields
+		if org == "" {
+			return fmt.Errorf("organization is required. Use --org flag or set default with: amp config set default_org <name>")
+		}
+		if project == "" {
+			return fmt.Errorf("project is required. Use --project flag or set default with: amp config set default_project <name>")
+		}
+		if agentName == "" {
+			return fmt.Errorf("agent name is required. Use --agent flag")
+		}
+		if envName == "" {
+			return fmt.Errorf("environment name is required. Use --env flag")
+		}
+
+		// Validate limit range
+		if limit < 1 || limit > 1000 {
+			return fmt.Errorf("limit must be between 1 and 1000")
+		}
+
+		// Validate sort order
+		sortOrder := strings.ToLower(strings.TrimSpace(sort))
+		if sortOrder != "asc" && sortOrder != "desc" {
+			return fmt.Errorf("invalid sort value %q: must be 'asc' or 'desc'", sort)
+		}
+
+		// Build log request
+		req := api.RuntimeLogRequest{
+			EnvironmentName: envName,
+			Limit:           limit,
+			SortOrder:       sortOrder,
+		}
+
+		// Parse --since flag into start time
+		if since != "" {
+			startTime, err := parseSinceDuration(since)
+			if err != nil {
+				return fmt.Errorf("invalid --since value: %w", err)
+			}
+			req.StartTime = startTime.Format(time.RFC3339)
+			req.EndTime = time.Now().Format(time.RFC3339)
+		}
+
+		// Parse log levels
+		if level != "" {
+			levels := strings.Split(level, ",")
+			for i, l := range levels {
+				levels[i] = strings.TrimSpace(strings.ToUpper(l))
+			}
+			req.LogLevels = levels
+		}
+
+		// Set search phrase
+		if search != "" {
+			req.SearchPhrase = search
+		}
+
+		// Create API client
+		client := api.NewClient(
+			config.GetAPIURL(),
+			config.GetAPIKeyHeader(),
+			config.GetAPIKeyValue(),
+		)
+
+		// Fetch logs from API
+		logs, err := client.GetAgentRuntimeLogs(org, project, agentName, req)
+		if err != nil {
+			return fmt.Errorf("failed to get runtime logs: %w", err)
+		}
+
+		// JSON output
+		if output == "json" {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(logs)
+		}
+
+		// Display logs
+		fmt.Println(ui.TitleStyle.Render(fmt.Sprintf("%s Runtime Logs: %s (%s)", ui.IconAgent, agentName, envName)))
+		fmt.Println()
+
+		if len(logs.Logs) == 0 {
+			fmt.Println(ui.RenderWarning("No logs found for the specified criteria."))
+			return nil
+		}
+
+		// Print each log entry with timestamp and level
+		for _, entry := range logs.Logs {
+			timestamp := ui.FormatLogTimestamp(entry.Timestamp)
+			levelPrefix := ui.FormatLogLevel(entry.LogLevel)
+			if levelPrefix != "" {
+				fmt.Printf("[%s] %s %s\n", timestamp, levelPrefix, entry.Log)
+			} else {
+				fmt.Printf("[%s] %s\n", timestamp, entry.Log)
+			}
+		}
+
+		fmt.Println()
+		fmt.Println(ui.MutedStyle.Render(fmt.Sprintf("Showing %d log entries", len(logs.Logs))))
+
+		return nil
+	},
+}
+
+// parseSinceDuration parses a duration string like "1h", "24h", "7d" and returns the start time
+func parseSinceDuration(since string) (time.Time, error) {
+	since = strings.TrimSpace(strings.ToLower(since))
+
+	// Handle day suffix specially
+	if strings.HasSuffix(since, "d") {
+		days, err := strconv.Atoi(strings.TrimSuffix(since, "d"))
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid duration: %s", since)
+		}
+		if days <= 0 {
+			return time.Time{}, fmt.Errorf("duration must be positive: %s", since)
+		}
+		return time.Now().Add(-time.Duration(days) * 24 * time.Hour), nil
+	}
+
+	// Use standard Go duration parsing for h, m, s
+	duration, err := time.ParseDuration(since)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid duration: %s (use format like 1h, 30m, 24h, 7d)", since)
+	}
+
+	if duration <= 0 {
+		return time.Time{}, fmt.Errorf("duration must be positive: %s", since)
+	}
+
+	return time.Now().Add(-duration), nil
+}
+
 func init() {
 	rootCmd.AddCommand(agentsCmd)
 	agentsCmd.AddCommand(agentsListCmd)
@@ -700,6 +864,7 @@ func init() {
 	agentsCmd.AddCommand(agentsTokenCmd)
 	agentsCmd.AddCommand(agentsDeleteCmd)
 	agentsCmd.AddCommand(agentsCreateCmd)
+	agentsCmd.AddCommand(agentsLogsCmd)
 
 	// Add flags for token command
 	agentsTokenCmd.Flags().StringP("agent", "a", "", "Agent name (required)")
@@ -719,4 +884,13 @@ func init() {
 	agentsCreateCmd.Flags().String("subtype", "", "Agent subtype (chat-api/custom-api)")
 	agentsCreateCmd.Flags().String("language", "", "Programming language")
 	agentsCreateCmd.Flags().String("language-version", "", "Language version")
+
+	// Add flags for logs command
+	agentsLogsCmd.Flags().StringP("agent", "a", "", "Agent name (required)")
+	agentsLogsCmd.Flags().StringP("env", "e", "", "Environment name (required)")
+	agentsLogsCmd.Flags().String("since", "", "Show logs since duration (e.g., 1h, 24h, 7d)")
+	agentsLogsCmd.Flags().String("level", "", "Filter by log levels (comma-separated: ERROR,WARN,INFO,DEBUG)")
+	agentsLogsCmd.Flags().String("search", "", "Search phrase to filter logs")
+	agentsLogsCmd.Flags().Int("limit", 100, "Maximum number of log entries to return")
+	agentsLogsCmd.Flags().String("sort", "desc", "Sort order (asc/desc)")
 }

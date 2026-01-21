@@ -13,8 +13,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "amp",
-	Short: "CLI for WSO2 AI Agent Management Platform",
+	Use:     "amp",
+	Short:   "CLI for WSO2 AI Agent Management Platform",
+	Version: Version,
 	Long: `amp-cli lets you manage organizations, projects, and agents
 from your terminal.
 
@@ -49,6 +50,9 @@ func Execute() error {
 func init() {
 	// Initialize config BEFORE any command runs
 	cobra.OnInitialize(initConfig)
+
+	// Set version template for --version flag
+	rootCmd.SetVersionTemplate("amp version {{.Version}}\n")
 
 	// Persistent flags (available to all subcommands)
 	rootCmd.PersistentFlags().StringP("org", "o", "", "Organization name")
