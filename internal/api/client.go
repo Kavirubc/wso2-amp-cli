@@ -101,11 +101,11 @@ func TestConnection(baseURL string) error {
 	return nil
 }
 
-// ValidateAuth tests if the current credentials are valid by listing organizations
-func (c *Client) ValidateAuth() error {
-	_, err := c.ListOrganizations()
+// ValidateAuth tests if credentials are valid and returns organizations if successful
+func (c *Client) ValidateAuth() ([]OrganizationResponse, error) {
+	orgs, err := c.ListOrganizations()
 	if err != nil {
-		return fmt.Errorf("authentication failed: %w", err)
+		return nil, err
 	}
-	return nil
+	return orgs, nil
 }

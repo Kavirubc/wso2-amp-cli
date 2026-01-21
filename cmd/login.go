@@ -78,7 +78,17 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		authValue = "Bearer " + token
 	}
 
-	// Save credentials temporarily for validation
+	// Validate authentication BEFORE saving credentials
+	fmt.Print("  Validating credentials... ")
+	client := api.NewClient(apiURL, authHeader, authValue)
+	orgs, err := client.ValidateAuth()
+	if err != nil {
+		fmt.Println(ui.RenderError("Failed"))
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+	fmt.Println(ui.RenderSuccess("Authenticated"))
+
+	// Save credentials only after successful validation
 	if err := config.Set(config.KeyAPIURL, apiURL); err != nil {
 		return fmt.Errorf("failed to save API URL: %w", err)
 	}
@@ -89,21 +99,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to save token: %w", err)
 	}
 
-	// Validate authentication
-	fmt.Print("  Validating credentials... ")
-	client := api.NewClient(apiURL, authHeader, authValue)
-	if err := client.ValidateAuth(); err != nil {
-		fmt.Println(ui.RenderError("Failed"))
-		return fmt.Errorf("authentication failed: %w", err)
-	}
-	fmt.Println(ui.RenderSuccess("Authenticated"))
-
 	// Step 3: Select default organization
 	fmt.Println()
-	orgs, err := client.ListOrganizations()
-	if err != nil {
-		return fmt.Errorf("failed to fetch organizations: %w", err)
-	}
 
 	var defaultOrg string
 	if len(orgs) == 0 {
