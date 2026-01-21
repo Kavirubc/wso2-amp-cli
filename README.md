@@ -1,20 +1,14 @@
 # amp-cli
 
-A CLI tool for managing the WSO2 AI Agent Management Platform.
+A command-line tool for managing the WSO2 AI Agent Management Platform.
 
 ## Installation
 
 ### From Source (requires Go 1.21+)
 
 ```bash
-# Clone the repository
 git clone https://github.com/Kavirubc/wso2-amp-cli.git
 cd wso2-amp-cli
-
-# Install globally (produces 'amp' binary)
-go install ./cmd/amp
-
-# Or build locally
 go build -o amp ./cmd/amp
 ```
 
@@ -24,84 +18,171 @@ go build -o amp ./cmd/amp
 go install github.com/Kavirubc/wso2-amp-cli/cmd/amp@latest
 ```
 
-### Download Pre-built Binaries
+### Pre-built Binaries
 
-Download the latest release for your platform from the [Releases](https://github.com/Kavirubc/wso2-amp-cli/releases) page.
+Download from the [Releases](https://github.com/Kavirubc/wso2-amp-cli/releases) page.
+
+## Quick Start
+
+```bash
+# 1. Run the setup wizard
+amp login
+
+# 2. List your agents
+amp agents list
+
+# 3. View agent details
+amp agents get my-agent
+```
 
 ## Configuration
 
-Configure the CLI before first use:
+### Using Login Command (Recommended)
 
 ```bash
-# Set your API server URL
-amp config set api_url http://your-server:8080
-
-# Set your API key (if required)
-amp config set api_key your-api-key
-
-# Set defaults for convenience
-amp config set default_org your-org-name
-amp config set default_project your-project-name
-
-# View current configuration
-amp config list
+amp login
 ```
 
-Configuration is stored in `~/.amp/config.yaml`
+This interactive wizard will guide you through:
+- Setting the API server URL
+- Authenticating with your token
+- Selecting default organization and project
 
-## Usage
+### Manual Configuration
+
+```bash
+# Set API server URL
+amp config set api_url https://your-server.com/api/v1
+
+# Set authentication
+amp config set api_key_header Authorization
+amp config set api_key "Bearer your-token"
+
+# Set defaults for convenience
+amp config set default_org your-org
+amp config set default_project your-project
+
+# View current configuration
+amp config show
+```
+
+### Configuration File
+
+Settings are stored in `~/.amp/config.yaml`
+
+| Key | Description |
+|-----|-------------|
+| `api_url` | API server URL |
+| `api_key_header` | Authentication header name |
+| `api_key` | Authentication token |
+| `default_org` | Default organization |
+| `default_project` | Default project |
+
+## Commands
+
+### Authentication
+
+#### `amp login`
+Interactive setup wizard for initial configuration.
+
+```bash
+amp login
+
+# Non-interactive mode
+amp login --api-url https://api.example.com --token your-token
+```
+
+#### `amp logout`
+Clear stored credentials.
+
+```bash
+amp logout
+
+# Skip confirmation
+amp logout --force
+```
 
 ### Organizations
 
-```bash
-# List all organizations
-amp orgs list
+#### `amp orgs list`
+List all organizations.
 
-# Output as JSON
+```bash
+amp orgs list
 amp orgs list --output json
+```
+
+#### `amp orgs get <name>`
+Get organization details.
+
+```bash
+amp orgs get my-org
 ```
 
 ### Projects
 
+#### `amp projects list`
+List all projects in an organization.
+
 ```bash
-# List projects in an organization
-amp projects list --org myorg
+amp projects list
+amp projects list --org my-org
+```
 
-# Get project details
-amp projects get myproject --org myorg
+#### `amp projects create`
+Create a new project.
 
-# Create a new project (interactive)
-amp projects create --org myorg
+```bash
+# Interactive mode
+amp projects create
 
-# Create a project with flags
-amp projects create --org myorg --display-name "My Project" --pipeline default
+# With flags
+amp projects create \
+  --display-name "My Project" \
+  --description "Project description" \
+  --pipeline default
+```
 
-# Delete a project
-amp projects delete myproject --org myorg
+#### `amp projects delete <name>`
+Delete a project.
 
-# Skip confirmation with --force
-amp projects delete myproject --org myorg --force
+```bash
+amp projects delete my-project
 
-# Output as JSON
-amp projects list --org myorg --output json
+# Skip confirmation
+amp projects delete my-project --force
 ```
 
 ### Agents
 
+#### `amp agents list`
+List all agents in a project.
+
 ```bash
-# List agents in a project
-amp agents list --org myorg --project myproject
+amp agents list
+amp agents list --org my-org --project my-project
+```
 
-# Get agent details
-amp agents get myagent --org myorg --project myproject
+#### `amp agents get <name>`
+Get agent details.
 
-# Create a new agent (interactive)
-amp agents create --org myorg --project myproject
+```bash
+amp agents get my-agent
+```
 
-# Create an external agent with flags
-amp agents create --display-name "My Agent" --provisioning external --org myorg --project myproject
+#### `amp agents create`
+Create a new agent.
 
-# Create an internal agent with flags
+```bash
+# Interactive mode
+amp agents create
+
+# External agent
+amp agents create \
+  --display-name "My Agent" \
+  --provisioning external
+
+# Internal agent with repository
 amp agents create \
   --display-name "My Python Agent" \
   --provisioning internal \
@@ -109,88 +190,177 @@ amp agents create \
   --branch main \
   --language python \
   --language-version 3.11 \
-  --subtype chat-api \
-  --org myorg --project myproject
+  --subtype chat-api
+```
 
-# Delete an agent
-amp agents delete myagent --org myorg --project myproject
+#### `amp agents delete <name>`
+Delete an agent.
 
-# Skip confirmation with --force
-amp agents delete myagent --org myorg --project myproject --force
+```bash
+amp agents delete my-agent
 
-# Output as JSON
-amp agents get myagent --output json
+# Skip confirmation
+amp agents delete my-agent --force
+```
+
+#### `amp agents token`
+Generate a JWT token for an agent.
+
+```bash
+amp agents token --agent my-agent
+
+# Custom expiration
+amp agents token --agent my-agent --expires-in 24h
+```
+
+#### `amp agents logs`
+View runtime logs for a deployed agent.
+
+```bash
+amp agents logs --agent my-agent --env development
+
+# Filter by log level
+amp agents logs --agent my-agent --env dev --level ERROR,WARN
+
+# Search logs
+amp agents logs --agent my-agent --env dev --search "error"
+
+# Limit results
+amp agents logs --agent my-agent --env dev --limit 50
+```
+
+### Builds
+
+#### `amp builds list`
+List all builds for an agent.
+
+```bash
+amp builds list --agent my-agent
+```
+
+#### `amp builds get <name>`
+Get build details with steps.
+
+```bash
+amp builds get build-123 --agent my-agent
+```
+
+#### `amp builds trigger`
+Trigger a new build.
+
+```bash
+amp builds trigger --agent my-agent
+
+# Trigger with specific commit
+amp builds trigger --agent my-agent --commit abc123
+```
+
+#### `amp builds logs <name>`
+View build logs.
+
+```bash
+amp builds logs build-123 --agent my-agent
+```
+
+### Deployments
+
+#### `amp deploy`
+Deploy an agent to an environment.
+
+```bash
+amp deploy --agent my-agent --image build-123
+
+# With environment variables
+amp deploy --agent my-agent --image build-123 \
+  --set-env API_KEY=secret \
+  --set-env DEBUG=true
+```
+
+#### `amp deployments list`
+List all deployments for an agent.
+
+```bash
+amp deployments list --agent my-agent
+```
+
+#### `amp deployments endpoints`
+List endpoints for a deployed agent.
+
+```bash
+amp deployments endpoints --agent my-agent
+
+# Filter by environment
+amp deployments endpoints --agent my-agent --env production
 ```
 
 ### Configuration
 
+#### `amp config show`
+Display all configuration settings.
+
 ```bash
-amp config list              # List all settings
-amp config get api_url       # Get a specific setting
-amp config set api_url URL   # Set a setting
+amp config show
 ```
 
-## Available Commands
+#### `amp config set <key> <value>`
+Set a configuration value.
 
-| Command | Description |
-|---------|-------------|
-| `amp orgs list` | List all organizations |
-| `amp projects list` | List all projects in an organization |
-| `amp projects get <name>` | Get details of a specific project |
-| `amp projects create` | Create a new project |
-| `amp projects delete <name>` | Delete a project |
-| `amp agents list` | List all agents in a project |
-| `amp agents get <name>` | Get details of a specific agent |
-| `amp agents create` | Create a new agent |
-| `amp agents delete <name>` | Delete an agent |
-| `amp config list` | Show all configuration |
-| `amp config set <key> <value>` | Set a configuration value |
-| `amp config get <key>` | Get a configuration value |
+```bash
+amp config set api_url https://api.example.com
+```
 
-## Flags
+#### `amp config get <key>`
+Get a specific configuration value.
 
-### Global Flags
+```bash
+amp config get api_url
+```
+
+#### `amp config reset`
+Reset configuration to defaults.
+
+```bash
+amp config reset
+```
+
+### Other Commands
+
+#### `amp version`
+Display version information.
+
+```bash
+amp version
+```
+
+#### `amp completion`
+Generate shell completion scripts.
+
+```bash
+# Bash
+amp completion bash > /etc/bash_completion.d/amp
+
+# Zsh
+amp completion zsh > "${fpath[1]}/_amp"
+
+# Fish
+amp completion fish > ~/.config/fish/completions/amp.fish
+```
+
+## Global Flags
 
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--org` | `-o` | Organization name |
 | `--project` | `-p` | Project name |
 | `--output` | | Output format: `table` or `json` |
-
-### Command-Specific Flags
-
-#### `projects create`
-| Flag | Description |
-|------|-------------|
-| `--name` | Project name (auto-generated if not provided) |
-| `--display-name` | Display name for the project |
-| `--description` | Project description |
-| `--pipeline` | Deployment pipeline name |
-
-#### `agents create`
-| Flag | Description |
-|------|-------------|
-| `--name` | Agent name (auto-generated if not provided) |
-| `--display-name` | Display name for the agent |
-| `--description` | Agent description |
-| `--provisioning` | Provisioning type: `internal` or `external` |
-| `--repo-url` | Repository URL (for internal agents) |
-| `--branch` | Git branch (default: main) |
-| `--app-path` | App path in repository (default: /) |
-| `--subtype` | Agent subtype: `chat-api` or `custom-api` |
-| `--language` | Programming language (python, nodejs, java, go, ballerina) |
-| `--language-version` | Language version |
-
-#### Delete Commands
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--force` | `-f` | Skip confirmation prompts |
+| `--verbose` | `-v` | Enable debug output |
+| `--help` | `-h` | Show help |
 
 ## Interactive Mode
 
-Running `amp` without arguments launches an interactive shell:
+Run `amp` without arguments to start an interactive shell:
 
-```bash
+```
 $ amp
 ╭─────────────────────────────────────────────────────────╮
 │                    WSO2 AMP CLI                         │
@@ -198,15 +368,113 @@ $ amp
 ╰─────────────────────────────────────────────────────────╯
 
 amp> orgs list
-amp> projects list
+amp> agents list
 amp> exit
+```
+
+## Examples
+
+### Deploy a New Agent
+
+```bash
+# 1. Create the agent
+amp agents create \
+  --display-name "My API Agent" \
+  --provisioning internal \
+  --repo-url https://github.com/user/my-agent \
+  --branch main \
+  --language python \
+  --language-version 3.11 \
+  --subtype custom-api
+
+# 2. Wait for build to complete
+amp builds list --agent my-api-agent
+
+# 3. Deploy to development
+amp deploy --agent my-api-agent --image build-xyz
+
+# 4. Check deployment status
+amp deployments list --agent my-api-agent
+
+# 5. Get the endpoint URL
+amp deployments endpoints --agent my-api-agent --env development
+```
+
+### Monitor an Agent
+
+```bash
+# View recent builds
+amp builds list --agent my-agent
+
+# Check build details
+amp builds get build-123 --agent my-agent
+
+# View build logs
+amp builds logs build-123 --agent my-agent
+
+# View runtime logs
+amp agents logs --agent my-agent --env development --since 1h
+```
+
+### Generate Agent Token
+
+```bash
+# Generate token for API calls
+amp agents token --agent my-agent --expires-in 7d
+
+# Use the token in your application
+export AGENT_TOKEN=$(amp agents token --agent my-agent --output json | jq -r .token)
+```
+
+## Troubleshooting
+
+### Authentication Issues
+
+```
+✗ Authentication failed
+```
+
+**Solution:** Run `amp login` to reconfigure your credentials, or check:
+```bash
+amp config show
+```
+
+### Connection Errors
+
+```
+✗ Cannot connect to API server
+```
+
+**Solution:** Verify the API URL is correct:
+```bash
+amp config get api_url
+```
+
+### Resource Not Found
+
+```
+✗ Agent 'my-agent' not found
+```
+
+**Solution:** List available resources:
+```bash
+amp agents list
+amp projects list
+amp orgs list
+```
+
+### Debug Mode
+
+Enable verbose output to see detailed request/response information:
+```bash
+amp agents list --verbose
 ```
 
 ## Development
 
 ```bash
 # Run without building
-go run ./cmd/amp agents list --org test --project test
+go run ./cmd/amp agents list
 
 # Build
 go build -o amp ./cmd/amp
