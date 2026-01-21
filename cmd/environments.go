@@ -60,7 +60,7 @@ var environmentsListCmd = &cobra.Command{
 		for i, env := range environments {
 			prodStatus := "No"
 			if env.IsProduction {
-				prodStatus = "Yes"
+				prodStatus = "Yes ★"
 			}
 			rows[i] = []string{
 				env.Name,
