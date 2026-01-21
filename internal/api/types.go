@@ -213,3 +213,14 @@ type TokenResponse struct {
 	IssuedAt  int64  `json:"issuedAt"`
 	TokenType string `json:"tokenType"`
 }
+
+// RuntimeLogRequest for POST /orgs/{org}/projects/{proj}/agents/{agent}/logs
+type RuntimeLogRequest struct {
+	EnvironmentName string   `json:"environmentName"`
+	StartTime       string   `json:"startTime,omitempty"`
+	EndTime         string   `json:"endTime,omitempty"`
+	Limit           int      `json:"limit,omitempty"`
+	SortOrder       string   `json:"sortOrder,omitempty"`
+	LogLevels       []string `json:"logLevels,omitempty"`
+	SearchPhrase    string   `json:"searchPhrase,omitempty"`
+}
