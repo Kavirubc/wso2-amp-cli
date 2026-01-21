@@ -176,11 +176,23 @@ type OrganizationListResponse struct {
 
 // DeploymentPipelineResponse represents a deployment pipeline
 type DeploymentPipelineResponse struct {
-	Name        string    `json:"name"`
-	DisplayName string    `json:"displayName,omitempty"`
-	Description string    `json:"description,omitempty"`
-	OrgName     string    `json:"orgName"`
-	CreatedAt   time.Time `json:"createdAt"`
+	Name           string          `json:"name"`
+	DisplayName    string          `json:"displayName,omitempty"`
+	Description    string          `json:"description,omitempty"`
+	OrgName        string          `json:"orgName"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	PromotionPaths []PromotionPath `json:"promotionPaths,omitempty"`
+}
+
+// PromotionPath represents a promotion path in a deployment pipeline
+type PromotionPath struct {
+	SourceEnvironmentRef  string      `json:"sourceEnvironmentRef"`
+	TargetEnvironmentRefs []TargetRef `json:"targetEnvironmentRefs"`
+}
+
+// TargetRef represents a target environment reference
+type TargetRef struct {
+	Name string `json:"name"`
 }
 
 // DeploymentPipelineListResponse wraps paginated pipelines response
@@ -189,6 +201,42 @@ type DeploymentPipelineListResponse struct {
 	Limit               int                          `json:"limit"`
 	Offset              int                          `json:"offset"`
 	Total               int                          `json:"total"`
+}
+
+// Environment represents an environment in the platform
+type Environment struct {
+	UUID         string    `json:"uuid,omitempty"`
+	Name         string    `json:"name"`
+	DisplayName  string    `json:"displayName,omitempty"`
+	DataplaneRef string    `json:"dataplaneRef,omitempty"`
+	IsProduction bool      `json:"isProduction"`
+	DNSPrefix    string    `json:"dnsPrefix,omitempty"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+// EnvironmentListResponse wraps paginated environments response
+type EnvironmentListResponse struct {
+	Environments []Environment `json:"environments"`
+	Limit        int           `json:"limit"`
+	Offset       int           `json:"offset"`
+	Total        int           `json:"total"`
+}
+
+// DataPlane represents a data plane in the platform
+type DataPlane struct {
+	Name        string    `json:"name"`
+	DisplayName string    `json:"displayName,omitempty"`
+	Description string    `json:"description,omitempty"`
+	OrgName     string    `json:"orgName,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
+// DataPlaneListResponse wraps paginated data planes response
+type DataPlaneListResponse struct {
+	DataPlanes []DataPlane `json:"dataPlanes"`
+	Limit      int         `json:"limit"`
+	Offset     int         `json:"offset"`
+	Total      int         `json:"total"`
 }
 
 // --- Request Types ---
