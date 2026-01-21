@@ -85,3 +85,27 @@ func (c *Client) doDelete(path string) error {
 	}
 	return nil
 }
+
+// TestConnection checks if the API server is reachable (without auth)
+func TestConnection(baseURL string) error {
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// Try to reach the base URL
+	resp, err := client.Get(baseURL)
+	if err != nil {
+		return fmt.Errorf("cannot connect to server: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Any response means server is reachable
+	return nil
+}
+
+// ValidateAuth tests if the current credentials are valid by listing organizations
+func (c *Client) ValidateAuth() error {
+	_, err := c.ListOrganizations()
+	if err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+	return nil
+}
