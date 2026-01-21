@@ -214,10 +214,57 @@ func selectProject(reader *bufio.Reader, projects []api.ProjectResponse) (string
 	return projects[selection-1].Name, nil
 }
 
+var logoutCmd = &cobra.Command{
+	Use:   "logout",
+	Short: "Clear stored credentials",
+	Long:  `Remove stored authentication credentials from the CLI configuration.`,
+	RunE:  runLogout,
+}
+
+func runLogout(cmd *cobra.Command, args []string) error {
+	reader := bufio.NewReader(os.Stdin)
+
+	// Check if already logged out
+	if !config.IsConfigured() {
+		fmt.Println(ui.RenderInfo("No credentials stored. Already logged out."))
+		return nil
+	}
+
+	// Get force flag
+	force, _ := cmd.Flags().GetBool("force")
+
+	// Confirm unless force flag is set
+	if !force {
+		fmt.Print("? Are you sure you want to log out? [y/N]: ")
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(strings.ToLower(input))
+
+		if input != "y" && input != "yes" {
+			fmt.Println("Logout cancelled.")
+			return nil
+		}
+	}
+
+	// Clear credentials
+	if err := config.ClearCredentials(); err != nil {
+		return fmt.Errorf("failed to clear credentials: %w", err)
+	}
+
+	fmt.Println(ui.RenderSuccess("Credentials removed"))
+	fmt.Println()
+	fmt.Println("To log in again, run: amp login")
+
+	return nil
+}
+
 func init() {
 	rootCmd.AddCommand(loginCmd)
+	rootCmd.AddCommand(logoutCmd)
 
-	// Flags for non-interactive mode
+	// Login flags for non-interactive mode
 	loginCmd.Flags().String("api-url", "", "API server URL")
 	loginCmd.Flags().String("token", "", "API token for authentication")
+
+	// Logout flags
+	logoutCmd.Flags().BoolP("force", "f", false, "Skip confirmation prompt")
 }
