@@ -59,8 +59,26 @@ func Set(key, value string) error {
 	return viper.WriteConfigAs(ConfigFile())
 }
 
-func GetAPIURL() string       { return viper.GetString(KeyAPIURL) }
-func GetAPIKeyHeader() string { return viper.GetString(KeyAPIKeyHeader) }
-func GetAPIKeyValue() string  { return viper.GetString(KeyAPIKeyValue) }
-func GetDefaultOrg() string   { return viper.GetString(KeyDefaultOrg) }
+func GetAPIURL() string         { return viper.GetString(KeyAPIURL) }
+func GetAPIKeyHeader() string   { return viper.GetString(KeyAPIKeyHeader) }
+func GetAPIKeyValue() string    { return viper.GetString(KeyAPIKeyValue) }
+func GetDefaultOrg() string     { return viper.GetString(KeyDefaultOrg) }
 func GetDefaultProject() string { return viper.GetString(KeyDefaultProj) }
+
+// ClearCredentials removes stored authentication credentials
+func ClearCredentials() error {
+	viper.Set(KeyAPIKeyValue, "")
+	viper.Set(KeyDefaultOrg, "")
+	viper.Set(KeyDefaultProj, "")
+
+	if err := os.MkdirAll(ConfigDir(), 0755); err != nil {
+		return err
+	}
+
+	return viper.WriteConfigAs(ConfigFile())
+}
+
+// IsConfigured checks if the CLI has been configured with credentials
+func IsConfigured() bool {
+	return viper.GetString(KeyAPIKeyValue) != ""
+}
