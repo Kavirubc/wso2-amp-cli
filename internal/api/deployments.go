@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // ListDeployments fetches all deployments for an agent (returns simple list)
@@ -75,7 +76,7 @@ func (c *Client) DeployAgent(orgName, projectName, agentName string, req DeployA
 func (c *Client) GetAgentEndpoints(orgName, projectName, agentName, environment string) ([]EndpointResponse, error) {
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/endpoints"
 	if environment != "" {
-		path += "?environment=" + environment
+		path += "?environment=" + url.QueryEscape(environment)
 	}
 
 	resp, err := c.doRequest("GET", path)

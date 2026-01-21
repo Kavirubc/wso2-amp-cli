@@ -22,7 +22,7 @@ var deployCmd = &cobra.Command{
 		project, _ := cmd.Flags().GetString("project")
 		agent, _ := cmd.Flags().GetString("agent")
 		imageID, _ := cmd.Flags().GetString("image")
-		envVars, _ := cmd.Flags().GetStringSlice("env")
+		envVars, _ := cmd.Flags().GetStringSlice("set-env")
 		output, _ := cmd.Flags().GetString("output")
 
 		// Use defaults from config if not provided
@@ -53,6 +53,9 @@ var deployCmd = &cobra.Command{
 			parts := strings.SplitN(ev, "=", 2)
 			if len(parts) != 2 {
 				return fmt.Errorf("invalid environment variable format: %s (expected KEY=VALUE)", ev)
+			}
+			if parts[0] == "" {
+				return fmt.Errorf("invalid environment variable: key cannot be empty in %s", ev)
 			}
 			envList = append(envList, api.EnvironmentVariable{
 				Key:   parts[0],
@@ -97,7 +100,7 @@ var deployCmd = &cobra.Command{
 		printDeployRow("Agent:", agent)
 		printDeployRow("Image:", imageID)
 		if len(envList) > 0 {
-			printDeployRow("Environment:", fmt.Sprintf("%d variable(s) set", len(envList)))
+			printDeployRow("Env Variables:", fmt.Sprintf("%d variable(s) set", len(envList)))
 		}
 		fmt.Println()
 
@@ -124,5 +127,5 @@ func init() {
 	deployCmd.Flags().StringP("image", "i", "", "Build image ID (required)")
 
 	// Optional flags
-	deployCmd.Flags().StringSliceP("env", "e", nil, "Environment variables (KEY=VALUE, can be specified multiple times)")
+	deployCmd.Flags().StringSliceP("set-env", "e", nil, "Environment variables (KEY=VALUE, can be specified multiple times)")
 }
