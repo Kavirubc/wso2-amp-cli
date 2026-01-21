@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
@@ -9,11 +10,11 @@ import (
 
 var debugStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))
 
-// Debug prints a message only if verbose mode is enabled
+// Debug prints a message to stderr only if verbose mode is enabled
 func Debug(format string, args ...interface{}) {
 	if Verbose {
 		msg := fmt.Sprintf(format, args...)
-		fmt.Println(debugStyle.Render("DEBUG: " + msg))
+		fmt.Fprintln(os.Stderr, debugStyle.Render("DEBUG: "+msg))
 	}
 }
 

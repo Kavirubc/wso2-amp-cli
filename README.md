@@ -63,7 +63,7 @@ amp config set default_org your-org
 amp config set default_project your-project
 
 # View current configuration
-amp config show
+amp config list
 ```
 
 ### Configuration File
@@ -295,11 +295,11 @@ amp deployments endpoints --agent my-agent --env production
 
 ### Configuration
 
-#### `amp config show`
+#### `amp config list`
 Display all configuration settings.
 
 ```bash
-amp config show
+amp config list
 ```
 
 #### `amp config set <key> <value>`
@@ -314,13 +314,6 @@ Get a specific configuration value.
 
 ```bash
 amp config get api_url
-```
-
-#### `amp config reset`
-Reset configuration to defaults.
-
-```bash
-amp config reset
 ```
 
 ### Other Commands
@@ -360,7 +353,7 @@ amp completion fish > ~/.config/fish/completions/amp.fish
 
 Run `amp` without arguments to start an interactive shell:
 
-```
+```text
 $ amp
 ╭─────────────────────────────────────────────────────────╮
 │                    WSO2 AMP CLI                         │
@@ -430,18 +423,18 @@ export AGENT_TOKEN=$(amp agents token --agent my-agent --output json | jq -r .to
 
 ### Authentication Issues
 
-```
+```text
 ✗ Authentication failed
 ```
 
 **Solution:** Run `amp login` to reconfigure your credentials, or check:
 ```bash
-amp config show
+amp config list
 ```
 
 ### Connection Errors
 
-```
+```text
 ✗ Cannot connect to API server
 ```
 
@@ -452,7 +445,7 @@ amp config get api_url
 
 ### Resource Not Found
 
-```
+```text
 ✗ Agent 'my-agent' not found
 ```
 

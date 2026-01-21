@@ -57,17 +57,28 @@ func AuthError(cause error) *CLIError {
 	return &CLIError{
 		Message:    "Authentication failed",
 		Cause:      cause,
-		Suggestion: "Check your credentials with 'amp config show' or run 'amp login' to reconfigure",
+		Suggestion: "Check your credentials with 'amp config list' or run 'amp login' to reconfigure",
 	}
 }
 
 // NotFoundError creates a not found error with suggestions
 func NotFoundError(resourceType, resourceName string) *CLIError {
-	listCmd := fmt.Sprintf("amp %ss list", strings.ToLower(resourceType))
+	plural := pluralizeResource(resourceType)
+	listCmd := fmt.Sprintf("amp %s list", plural)
 	return &CLIError{
 		Message:    fmt.Sprintf("%s '%s' not found", resourceType, resourceName),
-		Suggestion: fmt.Sprintf("List available %ss with '%s'", strings.ToLower(resourceType), listCmd),
+		Suggestion: fmt.Sprintf("List available %s with '%s'", plural, listCmd),
 	}
+}
+
+// pluralizeResource returns a lowercase plural form of a resource type.
+// Handles words ending in 's' to avoid incorrect forms like "statuss".
+func pluralizeResource(resourceType string) string {
+	lower := strings.ToLower(resourceType)
+	if strings.HasSuffix(lower, "s") {
+		return lower
+	}
+	return lower + "s"
 }
 
 // ConnectionError creates a connection error with suggestions
@@ -75,7 +86,7 @@ func ConnectionError(url string, cause error) *CLIError {
 	return &CLIError{
 		Message:    "Cannot connect to API server",
 		Cause:      cause,
-		Suggestion: "Check if the server is running and verify api_url with 'amp config show'",
+		Suggestion: "Check if the server is running and verify api_url with 'amp config list'",
 		Context:    map[string]string{"url": url},
 	}
 }
@@ -134,10 +145,15 @@ func APIError(statusCode int, body string) *CLIError {
 	}
 }
 
-// truncateBody limits the error body length for display
+// truncateBody limits the error body length for display (UTF-8 safe)
 func truncateBody(body string) string {
-	if len(body) > 200 {
-		return body[:200] + "..."
+	const maxRunes = 200
+	if len(body) <= maxRunes {
+		return body
 	}
-	return body
+	runes := []rune(body)
+	if len(runes) <= maxRunes {
+		return body
+	}
+	return string(runes[:maxRunes]) + "..."
 }

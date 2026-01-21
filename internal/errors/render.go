@@ -1,7 +1,9 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -36,10 +38,16 @@ func (e *CLIError) Render() string {
 		sb.WriteString(causeStyle.Render(e.Cause.Error()))
 	}
 
-	// Context information
+	// Context information (sorted for deterministic output)
 	if len(e.Context) > 0 {
 		sb.WriteString("\n")
-		for key, value := range e.Context {
+		keys := make([]string, 0, len(e.Context))
+		for k := range e.Context {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			value := e.Context[key]
 			if value != "" {
 				fmt.Fprintf(&sb, "\n  %s: %s",
 					contextStyle.Render(key),
@@ -59,7 +67,12 @@ func (e *CLIError) Render() string {
 
 // RenderError formats any error for CLI output
 func RenderError(err error) string {
-	if cliErr, ok := err.(*CLIError); ok {
+	if err == nil {
+		return ""
+	}
+	// Use errors.As to handle wrapped CLIError instances
+	var cliErr *CLIError
+	if errors.As(err, &cliErr) {
 		return cliErr.Render()
 	}
 	// Fallback for regular errors
