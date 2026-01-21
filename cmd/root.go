@@ -12,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Verbose controls debug output
+var Verbose bool
+
 var rootCmd = &cobra.Command{
 	Use:     "amp",
 	Short:   "CLI for WSO2 AI Agent Management Platform",
@@ -58,6 +61,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("org", "o", "", "Organization name")
 	rootCmd.PersistentFlags().StringP("project", "p", "", "Project name")
 	rootCmd.PersistentFlags().StringP("output", "", "table", "Output format (table|json)")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Enable verbose output for debugging")
 }
 
 // initConfig is called before any command executes
