@@ -739,11 +739,22 @@ Examples:
 			return fmt.Errorf("environment name is required. Use --env flag")
 		}
 
+		// Validate limit range
+		if limit < 1 || limit > 1000 {
+			return fmt.Errorf("limit must be between 1 and 1000")
+		}
+
+		// Validate sort order
+		sortOrder := strings.ToLower(strings.TrimSpace(sort))
+		if sortOrder != "asc" && sortOrder != "desc" {
+			return fmt.Errorf("invalid sort value %q: must be 'asc' or 'desc'", sort)
+		}
+
 		// Build log request
 		req := api.RuntimeLogRequest{
 			EnvironmentName: envName,
 			Limit:           limit,
-			SortOrder:       sort,
+			SortOrder:       sortOrder,
 		}
 
 		// Parse --since flag into start time
@@ -827,6 +838,9 @@ func parseSinceDuration(since string) (time.Time, error) {
 		if err != nil {
 			return time.Time{}, fmt.Errorf("invalid duration: %s", since)
 		}
+		if days <= 0 {
+			return time.Time{}, fmt.Errorf("duration must be positive: %s", since)
+		}
 		return time.Now().Add(-time.Duration(days) * 24 * time.Hour), nil
 	}
 
@@ -834,6 +848,10 @@ func parseSinceDuration(since string) (time.Time, error) {
 	duration, err := time.ParseDuration(since)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("invalid duration: %s (use format like 1h, 30m, 24h, 7d)", since)
+	}
+
+	if duration <= 0 {
+		return time.Time{}, fmt.Errorf("duration must be positive: %s", since)
 	}
 
 	return time.Now().Add(-duration), nil

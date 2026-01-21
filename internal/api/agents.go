@@ -107,7 +107,7 @@ func (c *Client) GenerateAgentToken(orgName, projectName, agentName string, req 
 }
 
 // GetAgentRuntimeLogs fetches runtime logs for a deployed agent
-func (c *Client) GetAgentRuntimeLogs(orgName, projectName, agentName string, req RuntimeLogRequest) (*BuildLogsResponse, error) {
+func (c *Client) GetAgentRuntimeLogs(orgName, projectName, agentName string, req RuntimeLogRequest) (*LogsResponse, error) {
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/logs"
 
 	resp, err := c.doRequestWithBody("POST", path, req)
@@ -121,7 +121,7 @@ func (c *Client) GetAgentRuntimeLogs(orgName, projectName, agentName string, req
 		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	var logsResp BuildLogsResponse
+	var logsResp LogsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&logsResp); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

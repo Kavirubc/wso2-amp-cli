@@ -52,9 +52,9 @@ func FormatLogLevel(level string) string {
 	case "ERROR":
 		return style.Render("[ERROR]")
 	case "WARN", "WARNING":
-		return style.Render("[WARN] ")
+		return style.Render("[WARN ]")
 	case "INFO":
-		return style.Render("[INFO] ")
+		return style.Render("[INFO ]")
 	case "DEBUG":
 		return style.Render("[DEBUG]")
 	default:
@@ -82,18 +82,25 @@ func FormatLogTimestamp(timestamp string) string {
 		parts := strings.SplitN(timestamp, "T", 2)
 		if len(parts) == 2 {
 			timePart := parts[1]
-			// Strip timezone
+			// Strip fractional seconds first (before timezone)
+			if idx := strings.Index(timePart, "."); idx != -1 {
+				// Keep everything before the dot, but check for timezone after
+				afterDot := timePart[idx+1:]
+				timePart = timePart[:idx]
+				// Check if timezone info exists after fractional seconds
+				if tzIdx := strings.IndexAny(afterDot, "Z+-"); tzIdx != -1 {
+					// Timezone found, timePart is already correct
+				}
+			}
+			// Strip timezone markers
 			if idx := strings.Index(timePart, "Z"); idx != -1 {
 				timePart = timePart[:idx]
 			}
 			if idx := strings.Index(timePart, "+"); idx != -1 {
 				timePart = timePart[:idx]
 			}
-			if idx := strings.Index(timePart, "-"); idx != -1 && idx > 2 {
-				timePart = timePart[:idx]
-			}
-			// Strip fractional seconds
-			if idx := strings.Index(timePart, "."); idx != -1 {
+			// Use LastIndex for negative timezone offset to avoid cutting time components
+			if idx := strings.LastIndex(timePart, "-"); idx != -1 && idx > 5 {
 				timePart = timePart[:idx]
 			}
 			return LogTimestampStyle.Render(timePart)

@@ -99,8 +99,8 @@ type BuildStep struct {
 	FinishedAt string `json:"finishedAt,omitempty"`
 }
 
-// BuildLogsResponse contains build logs with metadata
-type BuildLogsResponse struct {
+// LogsResponse contains logs with metadata (used for both build and runtime logs)
+type LogsResponse struct {
 	Logs       []LogEntry `json:"logs"`
 	TotalCount int        `json:"totalCount"`
 	TookMs     float64    `json:"tookMs"`
