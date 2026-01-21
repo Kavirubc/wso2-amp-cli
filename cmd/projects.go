@@ -165,7 +165,13 @@ var projectsDeleteCmd = &cobra.Command{
 
 		// Confirm deletion unless --force is used
 		if !force {
-			fmt.Printf("Are you sure you want to delete project '%s' in organization '%s'? [y/N]: ", projectName, org)
+			fmt.Println()
+			fmt.Println(ui.WarningStyle.Render("⚠️  You are about to delete a project"))
+			fmt.Printf("   Project: %s\n", projectName)
+			fmt.Printf("   Organization: %s\n", org)
+			fmt.Println()
+			fmt.Println(ui.MutedStyle.Render("This action cannot be undone."))
+			fmt.Print("Are you sure? [y/N]: ")
 			reader := bufio.NewReader(os.Stdin)
 			response, _ := reader.ReadString('\n')
 			response = strings.TrimSpace(strings.ToLower(response))

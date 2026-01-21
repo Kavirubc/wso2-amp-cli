@@ -317,7 +317,14 @@ var agentsDeleteCmd = &cobra.Command{
 
 		// Confirm deletion unless --force is used
 		if !force {
-			fmt.Printf("Are you sure you want to delete agent '%s' in project '%s'? [y/N]: ", agentName, project)
+			fmt.Println()
+			fmt.Println(ui.WarningStyle.Render("⚠️  You are about to delete an agent"))
+			fmt.Printf("   Agent: %s\n", agentName)
+			fmt.Printf("   Organization: %s\n", org)
+			fmt.Printf("   Project: %s\n", project)
+			fmt.Println()
+			fmt.Println(ui.MutedStyle.Render("This action cannot be undone."))
+			fmt.Print("Are you sure? [y/N]: ")
 			reader := bufio.NewReader(os.Stdin)
 			response, _ := reader.ReadString('\n')
 			response = strings.TrimSpace(strings.ToLower(response))
