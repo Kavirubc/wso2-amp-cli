@@ -113,13 +113,49 @@ type LogEntry struct {
 	LogLevel  string `json:"logLevel"`
 }
 
-// DeploymentResponse represents a deployment
+// DeploymentResponse represents a deployment (simple)
 type DeploymentResponse struct {
 	AgentName      string    `json:"agentName"`
 	ProjectName    string    `json:"projectName"`
 	Status         string    `json:"status"`
 	Environment    string    `json:"environment"`
 	LastDeployedAt time.Time `json:"lastDeployedAt"`
+}
+
+// DeploymentDetails contains detailed deployment info for an environment
+type DeploymentDetails struct {
+	ImageID                    string               `json:"imageId"`
+	Status                     string               `json:"status"`
+	LastDeployed               *time.Time           `json:"lastDeployed,omitempty"`
+	Endpoints                  []DeploymentEndpoint `json:"endpoints,omitempty"`
+	EnvironmentDisplayName     string               `json:"environmentDisplayName,omitempty"`
+	PromotionTargetEnvironment *PromotionTarget     `json:"promotionTargetEnvironment,omitempty"`
+}
+
+// DeploymentEndpoint represents an endpoint for a deployed agent
+type DeploymentEndpoint struct {
+	Name       string `json:"name"`
+	URL        string `json:"url"`
+	Visibility string `json:"visibility"`
+}
+
+// PromotionTarget represents the target environment for promotion
+type PromotionTarget struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName,omitempty"`
+}
+
+// EndpointResponse represents an endpoint configuration
+type EndpointResponse struct {
+	URL          string          `json:"url"`
+	EndpointName string          `json:"endpointName"`
+	Visibility   string          `json:"visibility"`
+	Schema       *EndpointSchema `json:"schema,omitempty"`
+}
+
+// EndpointSchema holds the OpenAPI schema content
+type EndpointSchema struct {
+	Content string `json:"content"`
 }
 
 // AgentListResponse wraps the paginated agents response

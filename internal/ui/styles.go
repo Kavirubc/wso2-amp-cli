@@ -99,15 +99,16 @@ var (
 
 // Icon constants for consistent usage
 const (
-	IconSuccess = "✓"
-	IconError   = "✗"
-	IconWarning = "⚠"
-	IconInfo    = "ℹ"
-	IconList    = "📋"
-	IconConfig  = "⚙️"
-	IconAgent   = "🤖"
-	IconBuild   = "🔨"
-	IconDeploy  = "🚀"
+	IconSuccess  = "✓"
+	IconError    = "✗"
+	IconWarning  = "⚠"
+	IconInfo     = "ℹ"
+	IconList     = "📋"
+	IconConfig   = "⚙️"
+	IconAgent    = "🤖"
+	IconBuild    = "🔨"
+	IconDeploy   = "🚀"
+	IconEndpoint = "🔗"
 )
 
 // RenderSuccess renders a success message
