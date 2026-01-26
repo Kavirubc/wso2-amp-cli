@@ -11,6 +11,7 @@ Complete command reference for the WSO2 AI Agent Management Platform CLI.
 | `amp version` | Print version info | - |
 | `amp orgs list` | List organizations | `GET /orgs` |
 | `amp orgs get` | Get organization details | `GET /orgs/{name}` |
+| `amp orgs create` | Create organization | `POST /orgs` |
 | `amp projects list` | List projects | `GET /orgs/{org}/projects` |
 | `amp projects get` | Get project details | `GET /orgs/{org}/projects/{name}` |
 | `amp projects create` | Create project | `POST /orgs/{org}/projects` |
@@ -82,6 +83,14 @@ amp orgs list --output json
 ```bash
 amp orgs get my-org
 amp orgs get my-org --output json
+```
+
+### Create Organization
+
+```bash
+amp orgs create my-org
+amp orgs create --name my-org
+amp orgs create my-org --output json
 ```
 
 ## Projects
