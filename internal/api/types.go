@@ -241,6 +241,11 @@ type DataPlaneListResponse struct {
 
 // --- Request Types ---
 
+// CreateOrganizationRequest for POST /orgs
+type CreateOrganizationRequest struct {
+	Name string `json:"name"`
+}
+
 // CreateProjectRequest for POST /orgs/{org}/projects
 type CreateProjectRequest struct {
 	Name               string  `json:"name"`

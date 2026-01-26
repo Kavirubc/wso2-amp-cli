@@ -39,6 +39,15 @@ endpoints:
           type: string
           required: true
 
+    create:
+      method: POST
+      path: "/orgs"
+      cli_command: "amp orgs create <name>"
+      request_type: CreateOrganizationRequest
+      response_type: OrganizationResponse
+      response_code: 202
+      openapi_operation: createOrganization
+
   # Projects
   projects:
     list:
@@ -298,6 +307,12 @@ types:
         type: integer
       - name: total
         type: integer
+
+  CreateOrganizationRequest:
+    fields:
+      - name: name
+        type: string
+        required: true
 
   CreateProjectRequest:
     fields:
@@ -723,6 +738,14 @@ commands:
     description: "Get organization details"
     args: ["<name>"]
     api: "GET /orgs/{name}"
+
+  - name: amp orgs create
+    description: "Create a new organization"
+    args: ["<name>"]
+    api: "POST /orgs"
+    flags:
+      - name: "--name"
+        description: "Organization name"
 
   - name: amp projects list
     description: "List projects in an organization"
