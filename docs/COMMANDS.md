@@ -229,7 +229,11 @@ amp agents config --agent my-agent --env development --output json
 | `--env` | `-e` | Yes | - | Environment name |
 | `--show-secrets` | - | No | false | Show unmasked values for sensitive variables |
 
-Sensitive values (keys containing "secret", "password", "token", "api_key", etc.) are masked by default. Use `--show-secrets` to reveal them.
+Sensitive values are masked by default in both table and JSON output. Keys are considered sensitive if they:
+- End with `_KEY` (e.g., `API_KEY`, `SECRET_KEY`, `PRIVATE_KEY`)
+- Contain patterns like `secret`, `password`, `token`, `credential`, `certificate`
+
+Use `--show-secrets` to reveal masked values in either output format.
 
 ## Builds
 

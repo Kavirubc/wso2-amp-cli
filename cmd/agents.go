@@ -1032,11 +1032,28 @@ Examples:
 			return fmt.Errorf("failed to get configuration: %w", err)
 		}
 
-		// JSON output
+		// JSON output - apply masking unless --show-secrets is set
 		if output == "json" {
+			outputResp := configResp
+			if !showSecrets {
+				// Create a copy with masked values for sensitive keys
+				maskedConfigs := make([]api.EnvironmentVariable, len(configResp.Configurations))
+				for i, cfg := range configResp.Configurations {
+					maskedConfigs[i] = api.EnvironmentVariable{Key: cfg.Key, Value: cfg.Value}
+					if isSensitiveKey(cfg.Key) {
+						maskedConfigs[i].Value = maskSensitiveValue(cfg.Value)
+					}
+				}
+				outputResp = &api.ConfigurationResponse{
+					ProjectName:    configResp.ProjectName,
+					AgentName:      configResp.AgentName,
+					Environment:    configResp.Environment,
+					Configurations: maskedConfigs,
+				}
+			}
 			encoder := json.NewEncoder(os.Stdout)
 			encoder.SetIndent("", "  ")
-			return encoder.Encode(configResp)
+			return encoder.Encode(outputResp)
 		}
 
 		// Check if there are any configurations
@@ -1078,10 +1095,19 @@ Examples:
 
 // isSensitiveKey checks if a key name suggests it contains sensitive data
 func isSensitiveKey(key string) bool {
+	upperKey := strings.ToUpper(strings.TrimSpace(key))
+
+	// Check for keys ending with _KEY (e.g., API_KEY, SECRET_KEY, PRIVATE_KEY)
+	if strings.HasSuffix(upperKey, "_KEY") {
+		return true
+	}
+
+	// Check for substring patterns that indicate sensitive data
 	lowerKey := strings.ToLower(key)
 	sensitivePatterns := []string{
 		"secret", "password", "passwd", "pwd", "token", "api_key", "apikey",
-		"auth", "credential", "private", "key", "cert", "certificate",
+		"credential", "private_key", "access_key", "cert", "certificate",
+		"auth_token", "bearer", "jwt",
 	}
 	for _, pattern := range sensitivePatterns {
 		if strings.Contains(lowerKey, pattern) {
@@ -1093,6 +1119,9 @@ func isSensitiveKey(key string) bool {
 
 // maskSensitiveValue returns a masked version of the value, showing first 2 and last 2 chars
 func maskSensitiveValue(value string) string {
+	if len(value) == 0 {
+		return "(empty)"
+	}
 	if len(value) <= 4 {
 		return "****"
 	}
