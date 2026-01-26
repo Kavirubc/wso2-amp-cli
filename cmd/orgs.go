@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/Kavirubc/wso2-amp-cli/internal/api"
@@ -17,7 +16,7 @@ import (
 var orgsCmd = &cobra.Command{
 	Use:   "orgs",
 	Short: "Manage Organizations",
-	Long:  `Commands for listing and viewing organizations.`,
+	Long:  `Commands for listing, viewing, and creating organizations.`,
 }
 
 var orgsGetCmd = &cobra.Command{
@@ -132,7 +131,10 @@ If neither is provided, you will be prompted to enter it interactively.`,
 			fmt.Println(ui.TitleStyle.Render("🏢 Create New Organization"))
 			fmt.Println()
 			fmt.Print("? Organization name: ")
-			input, _ := reader.ReadString('\n')
+			input, err := reader.ReadString('\n')
+			if err != nil {
+				return fmt.Errorf("failed to read input: %w", err)
+			}
 			name = strings.TrimSpace(input)
 		}
 
@@ -140,7 +142,7 @@ If neither is provided, you will be prompted to enter it interactively.`,
 		if name == "" {
 			return fmt.Errorf("organization name is required")
 		}
-		name = generateOrgName(name)
+		name = generateProjectName(name) // reuse shared name generation logic
 		if name == "" {
 			return fmt.Errorf("invalid organization name: must contain alphanumeric characters")
 		}
@@ -150,9 +152,6 @@ If neither is provided, you will be prompted to enter it interactively.`,
 			config.GetAPIKeyHeader(),
 			config.GetAPIKeyValue(),
 		)
-
-		fmt.Println()
-		fmt.Println("Creating organization...")
 
 		req := api.CreateOrganizationRequest{Name: name}
 		org, err := client.CreateOrganization(req)
@@ -181,30 +180,6 @@ If neither is provided, you will be prompted to enter it interactively.`,
 
 		return nil
 	},
-}
-
-// generateOrgName sanitizes input to create a valid organization name
-func generateOrgName(input string) string {
-	name := strings.ToLower(strings.TrimSpace(input))
-	name = strings.ReplaceAll(name, " ", "-")
-
-	// Keep only alphanumeric and hyphens
-	reg := regexp.MustCompile(`[^a-z0-9-]`)
-	name = reg.ReplaceAllString(name, "")
-
-	// Remove consecutive hyphens
-	reg = regexp.MustCompile(`-+`)
-	name = reg.ReplaceAllString(name, "-")
-
-	// Trim hyphens from edges
-	name = strings.Trim(name, "-")
-
-	// Enforce max length (63 chars for Kubernetes compatibility)
-	if len(name) > 63 {
-		name = strings.TrimRight(name[:63], "-")
-	}
-
-	return name
 }
 
 func init() {
