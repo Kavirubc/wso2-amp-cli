@@ -62,6 +62,10 @@ func init() {
 	rootCmd.PersistentFlags().StringP("project", "p", "", "Project name")
 	rootCmd.PersistentFlags().StringP("output", "", "table", "Output format (table|json)")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Enable verbose output for debugging")
+
+	// Pagination flags
+	rootCmd.PersistentFlags().Int("limit", 10, "Maximum number of results to return")
+	rootCmd.PersistentFlags().Int("offset", 0, "Number of results to skip")
 }
 
 // initConfig is called before any command executes

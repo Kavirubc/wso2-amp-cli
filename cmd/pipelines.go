@@ -25,6 +25,8 @@ var pipelinesListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		org, _ := cmd.Flags().GetString("org")
 		output, _ := cmd.Flags().GetString("output")
+		limit, _ := cmd.Flags().GetInt("limit")
+		offset, _ := cmd.Flags().GetInt("offset")
 
 		// Use default org from config if not provided
 		if org == "" {
@@ -40,7 +42,10 @@ var pipelinesListCmd = &cobra.Command{
 			config.GetAPIKeyValue(),
 		)
 
-		pipelines, err := client.ListDeploymentPipelines(org)
+		// Build pagination options
+		opts := api.ListOptions{Limit: limit, Offset: offset}
+
+		pipelines, total, err := client.ListDeploymentPipelines(org, opts)
 		if err != nil {
 			return fmt.Errorf("failed to list deployment pipelines: %w", err)
 		}
@@ -73,6 +78,7 @@ var pipelinesListCmd = &cobra.Command{
 
 		title := fmt.Sprintf("🔀 Deployment Pipelines in %s", org)
 		fmt.Println(ui.RenderTableWithTitle(title, headers, rows))
+		fmt.Println(ui.RenderPaginationInfo(offset, limit, total))
 		return nil
 	},
 }

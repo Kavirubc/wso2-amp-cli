@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 )
@@ -48,4 +50,27 @@ func StatusCell(status string) string {
 	default:
 		return MutedStyle.Render(status)
 	}
+}
+
+// RenderPaginationInfo returns a styled pagination footer
+func RenderPaginationInfo(offset, limit, total int) string {
+	if total == 0 {
+		return ""
+	}
+
+	start := offset + 1
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+
+	info := MutedStyle.Render(fmt.Sprintf("Showing %d-%d of %d", start, end, total))
+
+	// Show hint for next page if there are more results
+	if end < total {
+		nextOffset := offset + limit
+		info += "\n" + MutedStyle.Render(fmt.Sprintf("Use --offset %d to see next page", nextOffset))
+	}
+
+	return info
 }

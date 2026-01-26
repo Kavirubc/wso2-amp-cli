@@ -31,6 +31,8 @@ var agentsListCmd = &cobra.Command{
 		org, _ := cmd.Flags().GetString("org")
 		project, _ := cmd.Flags().GetString("project")
 		output, _ := cmd.Flags().GetString("output")
+		limit, _ := cmd.Flags().GetInt("limit")
+		offset, _ := cmd.Flags().GetInt("offset")
 
 		// Use defaults from config if not provided
 		if org == "" {
@@ -55,8 +57,11 @@ var agentsListCmd = &cobra.Command{
 			config.GetAPIKeyValue(),
 		)
 
+		// Build pagination options
+		opts := api.ListOptions{Limit: limit, Offset: offset}
+
 		// Fetch agents from API
-		agents, err := client.ListAgents(org, project)
+		agents, total, err := client.ListAgents(org, project, opts)
 		if err != nil {
 			return fmt.Errorf("failed to list agents: %w", err)
 		}
@@ -88,6 +93,7 @@ var agentsListCmd = &cobra.Command{
 		// Render styled table
 		title := fmt.Sprintf("%s Agents in %s/%s", ui.IconAgent, org, project)
 		fmt.Println(ui.RenderTableWithTitle(title, headers, rows))
+		fmt.Println(ui.RenderPaginationInfo(offset, limit, total))
 
 		return nil
 	},
@@ -836,6 +842,143 @@ Examples:
 	},
 }
 
+var agentsMetricsCmd = &cobra.Command{
+	Use:   "metrics",
+	Short: "View resource metrics for a deployed agent",
+	Long: `Fetch and display CPU and memory metrics for a deployed agent.
+
+Examples:
+  amp agents metrics --agent myagent --env development
+  amp agents metrics --agent myagent --env dev --since 1h
+  amp agents metrics --agent myagent --env dev --start "2025-01-20T13:00:00Z" --end "2025-01-20T14:00:00Z"
+  amp agents metrics --agent myagent --env dev --output json`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Get flags
+		org, _ := cmd.Flags().GetString("org")
+		project, _ := cmd.Flags().GetString("project")
+		agentName, _ := cmd.Flags().GetString("agent")
+		envName, _ := cmd.Flags().GetString("env")
+		since, _ := cmd.Flags().GetString("since")
+		startTime, _ := cmd.Flags().GetString("start")
+		endTime, _ := cmd.Flags().GetString("end")
+		output, _ := cmd.Flags().GetString("output")
+
+		// Use defaults from config if not provided
+		if org == "" {
+			org = config.GetDefaultOrg()
+		}
+		if project == "" {
+			project = config.GetDefaultProject()
+		}
+
+		// Validate required fields
+		if org == "" {
+			return fmt.Errorf("organization is required. Use --org flag or set default with: amp config set default_org <name>")
+		}
+		if project == "" {
+			return fmt.Errorf("project is required. Use --project flag or set default with: amp config set default_project <name>")
+		}
+		if agentName == "" {
+			return fmt.Errorf("agent name is required. Use --agent flag")
+		}
+		if envName == "" {
+			return fmt.Errorf("environment name is required. Use --env flag")
+		}
+
+		// Build metrics request
+		req := api.MetricsFilterRequest{
+			EnvironmentName: envName,
+		}
+
+		// Handle time range options
+		if since != "" {
+			// Parse --since flag
+			start, err := util.ParseSinceDuration(since)
+			if err != nil {
+				return fmt.Errorf("invalid --since value: %w", err)
+			}
+			req.StartTime = start.Format(time.RFC3339)
+			req.EndTime = time.Now().Format(time.RFC3339)
+		} else if startTime != "" || endTime != "" {
+			// Use explicit start/end times
+			if startTime == "" || endTime == "" {
+				return fmt.Errorf("both --start and --end must be provided together")
+			}
+			// Validate RFC3339 format
+			if _, err := time.Parse(time.RFC3339, startTime); err != nil {
+				return fmt.Errorf("invalid --start time format. Use RFC3339 format (e.g., 2025-01-20T13:00:00Z)")
+			}
+			if _, err := time.Parse(time.RFC3339, endTime); err != nil {
+				return fmt.Errorf("invalid --end time format. Use RFC3339 format (e.g., 2025-01-20T14:00:00Z)")
+			}
+			req.StartTime = startTime
+			req.EndTime = endTime
+		} else {
+			// Default to last 1 hour
+			req.StartTime = time.Now().Add(-1 * time.Hour).Format(time.RFC3339)
+			req.EndTime = time.Now().Format(time.RFC3339)
+		}
+
+		// Create API client
+		client := api.NewClient(
+			config.GetAPIURL(),
+			config.GetAPIKeyHeader(),
+			config.GetAPIKeyValue(),
+		)
+
+		// Fetch metrics from API
+		metrics, err := client.GetAgentMetrics(org, project, agentName, req)
+		if err != nil {
+			return fmt.Errorf("failed to get metrics: %w", err)
+		}
+
+		// JSON output
+		if output == "json" {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(metrics)
+		}
+
+		// Check if there's any data
+		if !ui.HasMetricsData(metrics) {
+			fmt.Println(ui.RenderWarning("No metrics data found for the specified criteria."))
+			return nil
+		}
+
+		// Display metrics
+		fmt.Println(ui.TitleStyle.Render(fmt.Sprintf("%s Resource Metrics for %s (%s)", ui.IconMetrics, agentName, envName)))
+		fmt.Println()
+
+		// Show time range
+		startDisplay := ui.FormatMetricTimestamp(req.StartTime)
+		endDisplay := ui.FormatMetricTimestamp(req.EndTime)
+		fmt.Printf("  %s  %s - %s\n", ui.KeyStyle.Render("Time Range:"), startDisplay, endDisplay)
+		fmt.Println()
+
+		// CPU Usage table
+		if len(metrics.CpuUsage) > 0 || len(metrics.CpuRequests) > 0 || len(metrics.CpuLimits) > 0 {
+			fmt.Println(ui.SectionStyle.Render("  CPU Usage:"))
+			headers, rows := ui.BuildCPUMetricsTable(metrics.CpuUsage, metrics.CpuRequests, metrics.CpuLimits)
+			if len(rows) > 0 {
+				fmt.Println(ui.RenderTable(headers, rows))
+			}
+			fmt.Println()
+		}
+
+		// Memory Usage table
+		if len(metrics.Memory) > 0 || len(metrics.MemoryRequests) > 0 || len(metrics.MemoryLimits) > 0 {
+			fmt.Println(ui.SectionStyle.Render("  Memory Usage:"))
+			headers, rows := ui.BuildMemoryMetricsTable(metrics.Memory, metrics.MemoryRequests, metrics.MemoryLimits)
+			if len(rows) > 0 {
+				fmt.Println(ui.RenderTable(headers, rows))
+			}
+			fmt.Println()
+		}
+
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(agentsCmd)
 	agentsCmd.AddCommand(agentsListCmd)
@@ -844,6 +987,7 @@ func init() {
 	agentsCmd.AddCommand(agentsDeleteCmd)
 	agentsCmd.AddCommand(agentsCreateCmd)
 	agentsCmd.AddCommand(agentsLogsCmd)
+	agentsCmd.AddCommand(agentsMetricsCmd)
 
 	// Add flags for token command
 	agentsTokenCmd.Flags().StringP("agent", "a", "", "Agent name (required)")
@@ -872,4 +1016,11 @@ func init() {
 	agentsLogsCmd.Flags().String("search", "", "Search phrase to filter logs")
 	agentsLogsCmd.Flags().Int("limit", 100, "Maximum number of log entries to return")
 	agentsLogsCmd.Flags().String("sort", "desc", "Sort order (asc/desc)")
+
+	// Add flags for metrics command
+	agentsMetricsCmd.Flags().StringP("agent", "a", "", "Agent name (required)")
+	agentsMetricsCmd.Flags().StringP("env", "e", "", "Environment name (required)")
+	agentsMetricsCmd.Flags().String("since", "", "Show metrics since duration (e.g., 1h, 24h, 7d)")
+	agentsMetricsCmd.Flags().String("start", "", "Start time (RFC3339 format)")
+	agentsMetricsCmd.Flags().String("end", "", "End time (RFC3339 format)")
 }

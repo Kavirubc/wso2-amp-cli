@@ -28,6 +28,8 @@ var projectsListCmd = &cobra.Command{
 		// Get flags
 		org, _ := cmd.Flags().GetString("org")
 		output, _ := cmd.Flags().GetString("output")
+		limit, _ := cmd.Flags().GetInt("limit")
+		offset, _ := cmd.Flags().GetInt("offset")
 
 		// Use default from config if not provided
 		if org == "" {
@@ -46,8 +48,11 @@ var projectsListCmd = &cobra.Command{
 			config.GetAPIKeyValue(),
 		)
 
+		// Build pagination options
+		opts := api.ListOptions{Limit: limit, Offset: offset}
+
 		// Fetch projects from API
-		projects, err := client.ListProjects(org)
+		projects, total, err := client.ListProjects(org, opts)
 		if err != nil {
 			return fmt.Errorf("failed to list projects: %w", err)
 		}
@@ -79,6 +84,7 @@ var projectsListCmd = &cobra.Command{
 		// Render styled table
 		title := fmt.Sprintf("📁 Projects in %s", org)
 		fmt.Println(ui.RenderTableWithTitle(title, headers, rows))
+		fmt.Println(ui.RenderPaginationInfo(offset, limit, total))
 
 		return nil
 	},
@@ -249,7 +255,7 @@ var projectsCreateCmd = &cobra.Command{
 
 		// Prompt for pipeline if not provided
 		if pipeline == "" {
-			pipelines, err := client.ListDeploymentPipelines(org)
+			pipelines, _, err := client.ListDeploymentPipelines(org, api.DefaultListOptions())
 			if err != nil {
 				return fmt.Errorf("failed to fetch pipelines: %w", err)
 			}

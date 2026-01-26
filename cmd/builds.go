@@ -28,6 +28,8 @@ var buildsListCmd = &cobra.Command{
 		project, _ := cmd.Flags().GetString("project")
 		agent, _ := cmd.Flags().GetString("agent")
 		output, _ := cmd.Flags().GetString("output")
+		limit, _ := cmd.Flags().GetInt("limit")
+		offset, _ := cmd.Flags().GetInt("offset")
 
 		// Use defaults from config if not provided
 		if org == "" {
@@ -55,8 +57,11 @@ var buildsListCmd = &cobra.Command{
 			config.GetAPIKeyValue(),
 		)
 
+		// Build pagination options
+		opts := api.ListOptions{Limit: limit, Offset: offset}
+
 		// Fetch builds from API
-		builds, err := client.ListBuilds(org, project, agent)
+		builds, total, err := client.ListBuilds(org, project, agent, opts)
 		if err != nil {
 			return fmt.Errorf("failed to list builds: %w", err)
 		}
@@ -90,6 +95,7 @@ var buildsListCmd = &cobra.Command{
 		// Render styled table
 		title := fmt.Sprintf("%s Builds for %s/%s/%s", ui.IconBuild, org, project, agent)
 		fmt.Println(ui.RenderTableWithTitle(title, headers, rows))
+		fmt.Println(ui.RenderPaginationInfo(offset, limit, total))
 
 		return nil
 	},

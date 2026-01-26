@@ -5,29 +5,36 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
-// ListAgents fetches all agents in a project
-func (c *Client) ListAgents(orgName, projectName string) ([]AgentResponse, error) {
+// ListAgents fetches agents in a project with pagination
+func (c *Client) ListAgents(orgName, projectName string, opts ListOptions) ([]AgentResponse, int, error) {
+	params := url.Values{}
+	buildPaginationQuery(params, opts)
+
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents"
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
 
 	resp, err := c.doRequest("GET", path)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+		return nil, 0, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
 	var listResp AgentListResponse
 	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, 0, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return listResp.Agents, nil
+	return listResp.Agents, listResp.Total, nil
 }
 
 // GetAgent fetches a specific agent
@@ -127,4 +134,27 @@ func (c *Client) GetAgentRuntimeLogs(orgName, projectName, agentName string, req
 	}
 
 	return &logsResp, nil
+}
+
+// GetAgentMetrics fetches resource metrics for a deployed agent
+func (c *Client) GetAgentMetrics(orgName, projectName, agentName string, req MetricsFilterRequest) (*MetricsResponse, error) {
+	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/metrics"
+
+	resp, err := c.doRequestWithBody("POST", path, req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var metricsResp MetricsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&metricsResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &metricsResp, nil
 }

@@ -69,7 +69,7 @@ func (e *Executor) orgs(args []string) string {
 		return ui.RenderWarning("Usage: orgs list")
 	}
 
-	orgs, err := e.client.ListOrganizations()
+	orgs, _, err := e.client.ListOrganizations(api.DefaultListOptions())
 	if err != nil {
 		return ui.RenderError(err.Error())
 	}
@@ -98,7 +98,7 @@ func (e *Executor) projects(args []string) string {
 
 	switch args[0] {
 	case "list":
-		projects, err := e.client.ListProjects(org)
+		projects, _, err := e.client.ListProjects(org, api.DefaultListOptions())
 		if err != nil {
 			return ui.RenderError(err.Error())
 		}
@@ -145,7 +145,7 @@ func (e *Executor) agents(args []string) string {
 		return ui.RenderError("Set defaults first: config set default_org/default_project <name>")
 	}
 
-	agents, err := e.client.ListAgents(org, project)
+	agents, _, err := e.client.ListAgents(org, project, api.DefaultListOptions())
 	if err != nil {
 		return ui.RenderError(err.Error())
 	}
