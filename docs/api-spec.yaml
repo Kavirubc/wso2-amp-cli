@@ -1,0 +1,915 @@
+# WSO2 AMP CLI API Specification
+# This specification documents the CLI's API bindings and alignment with the
+# Agent Manager Service OpenAPI specification.
+#
+# Reference: agent-manager-service/docs/api_v1_openapi.yaml
+
+version: "1.0.0"
+cli_version: "0.1.0"
+api_version: "v1"
+base_path: "/api/v1"
+
+# Authentication configuration
+auth:
+  type: "header"
+  default_header: "Authorization"
+  format: "Bearer {token}"
+  validation_endpoint: "/orgs"
+
+# API endpoint mappings
+endpoints:
+
+  # Organizations
+  organizations:
+    list:
+      method: GET
+      path: "/orgs"
+      cli_command: "amp orgs list"
+      response_type: OrganizationListResponse
+      openapi_operation: listOrganizations
+
+    get:
+      method: GET
+      path: "/orgs/{orgName}"
+      cli_command: "amp orgs get <name>"
+      response_type: OrganizationResponse
+      openapi_operation: getOrganization
+      path_params:
+        - name: orgName
+          type: string
+          required: true
+
+  # Projects
+  projects:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/projects"
+      cli_command: "amp projects list"
+      response_type: ProjectListResponse
+      openapi_operation: listProjects
+      path_params:
+        - name: orgName
+          type: string
+          required: true
+          cli_flag: "--org, -o"
+
+    get:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}"
+      cli_command: "amp projects get <name>"
+      response_type: ProjectResponse
+      openapi_operation: getProject
+      path_params:
+        - name: orgName
+          type: string
+          required: true
+        - name: projName
+          type: string
+          required: true
+
+    create:
+      method: POST
+      path: "/orgs/{orgName}/projects"
+      cli_command: "amp projects create"
+      request_type: CreateProjectRequest
+      response_type: ProjectResponse
+      response_code: 202
+      openapi_operation: createProject
+      path_params:
+        - name: orgName
+          type: string
+          required: true
+
+    delete:
+      method: DELETE
+      path: "/orgs/{orgName}/projects/{projName}"
+      cli_command: "amp projects delete <name>"
+      response_code: 204
+      openapi_operation: deleteProject
+
+    pipeline:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/deployment-pipeline"
+      cli_command: "amp projects pipeline <name>"
+      response_type: DeploymentPipelineResponse
+      openapi_operation: getDeploymentPipeline
+
+  # Agents
+  agents:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents"
+      cli_command: "amp agents list"
+      response_type: AgentListResponse
+      openapi_operation: listAgents
+
+    get:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}"
+      cli_command: "amp agents get <name>"
+      response_type: AgentResponse
+      openapi_operation: getAgent
+
+    create:
+      method: POST
+      path: "/orgs/{orgName}/projects/{projName}/agents"
+      cli_command: "amp agents create"
+      request_type: CreateAgentRequest
+      response_type: AgentResponse
+      response_code: 202
+      openapi_operation: createAgent
+
+    delete:
+      method: DELETE
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}"
+      cli_command: "amp agents delete <name>"
+      response_code: 204
+      openapi_operation: deleteAgent
+
+    token:
+      method: POST
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/token"
+      cli_command: "amp agents token --agent <name>"
+      request_type: TokenRequest
+      response_type: TokenResponse
+      openapi_operation: generateAgentToken
+
+    runtime_logs:
+      method: POST
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/runtime-logs"
+      cli_command: "amp agents logs --agent <name> --env <env>"
+      request_type: RuntimeLogRequest
+      response_type: LogsResponse
+      openapi_operation: filterAgentRuntimeLogs
+
+  # Builds
+  builds:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/builds"
+      cli_command: "amp builds list --agent <name>"
+      response_type: BuildsListResponse
+      openapi_operation: getAgentBuilds
+
+    get:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/builds/{buildName}"
+      cli_command: "amp builds get <build-name> --agent <name>"
+      response_type: BuildDetailsResponse
+      openapi_operation: getBuild
+
+    trigger:
+      method: POST
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/builds"
+      cli_command: "amp builds trigger --agent <name>"
+      response_type: BuildResponse
+      response_code: 202
+      openapi_operation: buildAgent
+      query_params:
+        - name: commitId
+          type: string
+          required: false
+          cli_flag: "--commit, -c"
+
+    logs:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/builds/{buildName}/build-logs"
+      cli_command: "amp builds logs <build-name> --agent <name>"
+      response_type: LogsResponse
+      openapi_operation: getBuildLogs
+
+  # Deployments
+  deployments:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/deployments"
+      cli_command: "amp deployments list --agent <name>"
+      response_type: DeploymentListResponse
+      openapi_operation: listAgentDeployments
+
+    deploy:
+      method: POST
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/deployments"
+      cli_command: "amp deploy --agent <name> --image <id>"
+      request_type: DeployAgentRequest
+      response_type: DeploymentResponse
+      response_code: 202
+      openapi_operation: deployAgent
+
+    endpoints:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/endpoints"
+      cli_command: "amp deployments endpoints --agent <name>"
+      response_type: EndpointsResponse
+      openapi_operation: getAgentEndpoints
+      query_params:
+        - name: environment
+          type: string
+          required: true
+          cli_flag: "--env, -e"
+
+  # Environments
+  environments:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/environments"
+      cli_command: "amp environments list"
+      response_type: EnvironmentListResponse
+      openapi_operation: listEnvironments
+
+  # Data Planes
+  data_planes:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/data-planes"
+      cli_command: "amp dataplanes list"
+      response_type: DataPlaneListResponse
+      openapi_operation: listDataPlanes
+
+  # Deployment Pipelines
+  deployment_pipelines:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/deployment-pipelines"
+      cli_command: "amp pipelines list"
+      response_type: DeploymentPipelineListResponse
+      openapi_operation: listDeploymentPipelines
+
+    get:
+      method: GET
+      path: "/orgs/{orgName}/deployment-pipelines/{pipelineName}"
+      cli_command: "amp pipelines get <name>"
+      response_type: DeploymentPipelineResponse
+      openapi_operation: getDeploymentPipeline
+
+# Type definitions aligned with OpenAPI schemas
+types:
+
+  # Organization types
+  OrganizationResponse:
+    fields:
+      - name: name
+        type: string
+      - name: displayName
+        type: string
+      - name: description
+        type: string
+      - name: namespace
+        type: string
+      - name: createdAt
+        type: datetime
+
+  OrganizationListResponse:
+    fields:
+      - name: organizations
+        type: "[]OrganizationResponse"
+      - name: limit
+        type: integer
+      - name: offset
+        type: integer
+      - name: total
+        type: integer
+
+  # Project types
+  ProjectResponse:
+    fields:
+      - name: uuid
+        type: string
+      - name: name
+        type: string
+      - name: orgName
+        type: string
+      - name: displayName
+        type: string
+      - name: description
+        type: string
+      - name: deploymentPipeline
+        type: string
+      - name: createdAt
+        type: datetime
+
+  ProjectListResponse:
+    fields:
+      - name: projects
+        type: "[]ProjectResponse"
+      - name: limit
+        type: integer
+      - name: offset
+        type: integer
+      - name: total
+        type: integer
+
+  CreateProjectRequest:
+    fields:
+      - name: name
+        type: string
+        required: true
+      - name: displayName
+        type: string
+        required: true
+      - name: description
+        type: string
+      - name: deploymentPipeline
+        type: string
+        required: true
+
+  # Agent types
+  AgentResponse:
+    fields:
+      - name: uuid
+        type: string
+      - name: name
+        type: string
+      - name: displayName
+        type: string
+      - name: description
+        type: string
+      - name: projectName
+        type: string
+      - name: status
+        type: string
+      - name: createdAt
+        type: datetime
+      - name: provisioning
+        type: Provisioning
+      - name: agentType
+        type: AgentTypeInfo
+      - name: runtimeConfigs
+        type: RuntimeConfig
+      - name: language
+        type: string
+
+  AgentListResponse:
+    fields:
+      - name: agents
+        type: "[]AgentResponse"
+      - name: limit
+        type: integer
+      - name: offset
+        type: integer
+      - name: total
+        type: integer
+
+  CreateAgentRequest:
+    fields:
+      - name: name
+        type: string
+        required: true
+      - name: displayName
+        type: string
+        required: true
+      - name: description
+        type: string
+      - name: provisioning
+        type: Provisioning
+        required: true
+      - name: agentType
+        type: AgentTypeInfo
+        required: true
+      - name: runtimeConfigs
+        type: RuntimeConfig
+      - name: inputInterface
+        type: InputInterface
+
+  Provisioning:
+    fields:
+      - name: type
+        type: string
+        enum: ["internal", "external"]
+      - name: repository
+        type: RepositoryConfig
+
+  RepositoryConfig:
+    fields:
+      - name: url
+        type: string
+      - name: branch
+        type: string
+      - name: appPath
+        type: string
+
+  AgentTypeInfo:
+    fields:
+      - name: type
+        type: string
+      - name: subType
+        type: string
+
+  RuntimeConfig:
+    fields:
+      - name: language
+        type: string
+      - name: languageVersion
+        type: string
+      - name: runCommand
+        type: string
+      - name: env
+        type: "[]EnvironmentVariable"
+
+  InputInterface:
+    fields:
+      - name: type
+        type: string
+      - name: port
+        type: integer
+      - name: basePath
+        type: string
+      - name: schema
+        type: SchemaConfig
+
+  SchemaConfig:
+    fields:
+      - name: path
+        type: string
+
+  # Build types
+  BuildResponse:
+    fields:
+      - name: name
+        type: string
+      - name: agentName
+        type: string
+      - name: projectName
+        type: string
+      - name: commitId
+        type: string
+      - name: status
+        type: string
+        enum: ["BuildTriggered", "BuildRunning", "BuildCompleted", "BuildFailed", "WorkloadUpdated"]
+      - name: branch
+        type: string
+      - name: startedAt
+        type: datetime
+      - name: endedAt
+        type: datetime
+
+  BuildDetailsResponse:
+    extends: BuildResponse
+    fields:
+      - name: percent
+        type: float
+      - name: steps
+        type: "[]BuildStep"
+      - name: durationSeconds
+        type: integer
+
+  BuildStep:
+    fields:
+      - name: type
+        type: string
+      - name: status
+        type: string
+      - name: message
+        type: string
+      - name: startedAt
+        type: string
+      - name: finishedAt
+        type: string
+
+  # Deployment types
+  DeploymentResponse:
+    fields:
+      - name: agentName
+        type: string
+      - name: projectName
+        type: string
+      - name: status
+        type: string
+      - name: environment
+        type: string
+      - name: lastDeployedAt
+        type: datetime
+
+  DeploymentDetails:
+    fields:
+      - name: imageId
+        type: string
+      - name: status
+        type: string
+      - name: lastDeployed
+        type: datetime
+      - name: endpoints
+        type: "[]DeploymentEndpoint"
+      - name: environmentDisplayName
+        type: string
+      - name: promotionTargetEnvironment
+        type: PromotionTarget
+
+  DeployAgentRequest:
+    fields:
+      - name: imageId
+        type: string
+        required: true
+      - name: env
+        type: "[]EnvironmentVariable"
+
+  DeploymentEndpoint:
+    fields:
+      - name: name
+        type: string
+      - name: url
+        type: string
+      - name: visibility
+        type: string
+        enum: ["Public", "Private", "Internal"]
+
+  EndpointResponse:
+    fields:
+      - name: url
+        type: string
+      - name: endpointName
+        type: string
+      - name: visibility
+        type: string
+      - name: schema
+        type: EndpointSchema
+
+  EndpointSchema:
+    fields:
+      - name: content
+        type: string
+
+  # Token types
+  TokenRequest:
+    fields:
+      - name: expiresIn
+        type: string
+        description: "Duration format (e.g., '24h', '7d')"
+
+  TokenResponse:
+    fields:
+      - name: token
+        type: string
+      - name: expiresAt
+        type: integer
+      - name: issuedAt
+        type: integer
+      - name: tokenType
+        type: string
+
+  # Log types
+  RuntimeLogRequest:
+    fields:
+      - name: environmentName
+        type: string
+        required: true
+      - name: startTime
+        type: string
+        format: datetime
+      - name: endTime
+        type: string
+        format: datetime
+      - name: limit
+        type: integer
+      - name: sortOrder
+        type: string
+        enum: ["asc", "desc"]
+      - name: logLevels
+        type: "[]string"
+        enum_values: ["INFO", "WARN", "ERROR", "DEBUG"]
+      - name: searchPhrase
+        type: string
+
+  LogsResponse:
+    fields:
+      - name: logs
+        type: "[]LogEntry"
+      - name: totalCount
+        type: integer
+      - name: tookMs
+        type: float
+
+  LogEntry:
+    fields:
+      - name: timestamp
+        type: string
+      - name: log
+        type: string
+      - name: logLevel
+        type: string
+
+  # Environment types
+  Environment:
+    fields:
+      - name: uuid
+        type: string
+      - name: name
+        type: string
+      - name: displayName
+        type: string
+      - name: dataplaneRef
+        type: string
+      - name: isProduction
+        type: boolean
+      - name: dnsPrefix
+        type: string
+      - name: createdAt
+        type: datetime
+
+  EnvironmentListResponse:
+    fields:
+      - name: environments
+        type: "[]Environment"
+      - name: limit
+        type: integer
+      - name: offset
+        type: integer
+      - name: total
+        type: integer
+
+  # Data Plane types
+  DataPlane:
+    fields:
+      - name: name
+        type: string
+      - name: displayName
+        type: string
+      - name: description
+        type: string
+      - name: orgName
+        type: string
+      - name: createdAt
+        type: datetime
+
+  DataPlaneListResponse:
+    fields:
+      - name: dataPlanes
+        type: "[]DataPlane"
+      - name: limit
+        type: integer
+      - name: offset
+        type: integer
+      - name: total
+        type: integer
+
+  # Pipeline types
+  DeploymentPipelineResponse:
+    fields:
+      - name: name
+        type: string
+      - name: displayName
+        type: string
+      - name: description
+        type: string
+      - name: orgName
+        type: string
+      - name: createdAt
+        type: datetime
+      - name: promotionPaths
+        type: "[]PromotionPath"
+
+  DeploymentPipelineListResponse:
+    fields:
+      - name: deploymentPipelines
+        type: "[]DeploymentPipelineResponse"
+      - name: limit
+        type: integer
+      - name: offset
+        type: integer
+      - name: total
+        type: integer
+
+  PromotionPath:
+    fields:
+      - name: sourceEnvironmentRef
+        type: string
+      - name: targetEnvironmentRefs
+        type: "[]TargetRef"
+
+  TargetRef:
+    fields:
+      - name: name
+        type: string
+
+  PromotionTarget:
+    fields:
+      - name: name
+        type: string
+      - name: displayName
+        type: string
+
+  # Common types
+  EnvironmentVariable:
+    fields:
+      - name: key
+        type: string
+      - name: value
+        type: string
+
+# CLI command reference
+commands:
+  - name: amp login
+    description: "Authenticate and configure the CLI"
+    flags:
+      - name: "--api-url"
+        description: "API server URL"
+      - name: "--token"
+        description: "Authentication token"
+
+  - name: amp logout
+    description: "Clear stored credentials"
+    flags:
+      - name: "--force, -f"
+        description: "Skip confirmation"
+
+  - name: amp version
+    description: "Print version information"
+
+  - name: amp orgs list
+    description: "List all organizations"
+    api: "GET /orgs"
+
+  - name: amp orgs get
+    description: "Get organization details"
+    args: ["<name>"]
+    api: "GET /orgs/{name}"
+
+  - name: amp projects list
+    description: "List projects in an organization"
+    api: "GET /orgs/{org}/projects"
+    flags:
+      - name: "--org, -o"
+        description: "Organization name"
+
+  - name: amp projects get
+    description: "Get project details"
+    args: ["<name>"]
+    api: "GET /orgs/{org}/projects/{name}"
+
+  - name: amp projects create
+    description: "Create a new project"
+    api: "POST /orgs/{org}/projects"
+    flags:
+      - name: "--name"
+        description: "Project name"
+        required: true
+      - name: "--display-name"
+        description: "Display name"
+        required: true
+      - name: "--pipeline"
+        description: "Deployment pipeline"
+        required: true
+
+  - name: amp projects delete
+    description: "Delete a project"
+    args: ["<name>"]
+    api: "DELETE /orgs/{org}/projects/{name}"
+
+  - name: amp projects pipeline
+    description: "Get project deployment pipeline"
+    args: ["<name>"]
+    api: "GET /orgs/{org}/projects/{name}/deployment-pipeline"
+
+  - name: amp agents list
+    description: "List agents in a project"
+    api: "GET /orgs/{org}/projects/{proj}/agents"
+
+  - name: amp agents get
+    description: "Get agent details"
+    args: ["<name>"]
+    api: "GET /orgs/{org}/projects/{proj}/agents/{name}"
+
+  - name: amp agents create
+    description: "Create a new agent"
+    api: "POST /orgs/{org}/projects/{proj}/agents"
+
+  - name: amp agents delete
+    description: "Delete an agent"
+    args: ["<name>"]
+    api: "DELETE /orgs/{org}/projects/{proj}/agents/{name}"
+
+  - name: amp agents token
+    description: "Generate agent JWT token"
+    api: "POST /orgs/{org}/projects/{proj}/agents/{name}/token"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--expires-in"
+        description: "Token expiry (e.g., 24h, 7d)"
+
+  - name: amp agents logs
+    description: "View agent runtime logs"
+    api: "POST /orgs/{org}/projects/{proj}/agents/{name}/runtime-logs"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--env, -e"
+        description: "Environment name"
+        required: true
+      - name: "--since"
+        description: "Show logs since (e.g., 1h, 24h)"
+      - name: "--level"
+        description: "Filter by log level"
+      - name: "--search"
+        description: "Search phrase"
+
+  - name: amp builds list
+    description: "List builds for an agent"
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/builds"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+
+  - name: amp builds get
+    description: "Get build details"
+    args: ["<build-name>"]
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/builds/{name}"
+
+  - name: amp builds trigger
+    description: "Trigger a new build"
+    api: "POST /orgs/{org}/projects/{proj}/agents/{agent}/builds"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--commit, -c"
+        description: "Commit ID"
+
+  - name: amp builds logs
+    description: "View build logs"
+    args: ["<build-name>"]
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/builds/{name}/build-logs"
+
+  - name: amp deployments list
+    description: "List deployments for an agent"
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/deployments"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+
+  - name: amp deployments endpoints
+    description: "List deployment endpoints"
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/endpoints"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--env, -e"
+        description: "Environment filter"
+
+  - name: amp deploy
+    description: "Deploy an agent"
+    api: "POST /orgs/{org}/projects/{proj}/agents/{agent}/deployments"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--image, -i"
+        description: "Image ID"
+        required: true
+      - name: "--set-env, -e"
+        description: "Environment variable (KEY=VALUE)"
+        multiple: true
+
+  - name: amp environments list
+    description: "List environments"
+    api: "GET /orgs/{org}/environments"
+    aliases: ["envs", "env"]
+
+  - name: amp dataplanes list
+    description: "List data planes"
+    api: "GET /orgs/{org}/data-planes"
+    aliases: ["dp"]
+
+  - name: amp pipelines list
+    description: "List deployment pipelines"
+    api: "GET /orgs/{org}/deployment-pipelines"
+    aliases: ["pipeline"]
+
+  - name: amp pipelines get
+    description: "Get pipeline details"
+    args: ["<name>"]
+    api: "GET /orgs/{org}/deployment-pipelines/{name}"
+
+  - name: amp config set
+    description: "Set configuration value"
+    args: ["<key>", "<value>"]
+    keys: ["api_url", "api_key_header", "api_key", "default_org", "default_project"]
+
+  - name: amp config get
+    description: "Get configuration value"
+    args: ["<key>"]
+
+  - name: amp config list
+    description: "List all configuration"
+
+# Global CLI flags
+global_flags:
+  - name: "--org, -o"
+    description: "Organization name (overrides default_org)"
+  - name: "--project, -p"
+    description: "Project name (overrides default_project)"
+  - name: "--output"
+    description: "Output format"
+    values: ["table", "json"]
+    default: "table"
+  - name: "--verbose, -v"
+    description: "Enable verbose output"
+  - name: "--version"
+    description: "Print version"
+  - name: "--help, -h"
+    description: "Show help"
