@@ -54,8 +54,15 @@ func StatusCell(status string) string {
 
 // RenderPaginationInfo returns a styled pagination footer
 func RenderPaginationInfo(offset, limit, total int) string {
+	// Handle edge cases
 	if total == 0 {
 		return ""
+	}
+	if limit <= 0 {
+		return ""
+	}
+	if offset >= total {
+		return MutedStyle.Render("No results in this range")
 	}
 
 	start := offset + 1

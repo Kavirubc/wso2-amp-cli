@@ -55,7 +55,7 @@ func (c *Client) ListBuilds(orgName, projectName, agentName string, opts ListOpt
 		return nil, 0, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	// Try to decode as paginated response first
+	// Decode paginated response
 	var listResp BuildListResponse
 	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
 		return nil, 0, fmt.Errorf("failed to decode response: %w", err)

@@ -192,6 +192,9 @@ func BuildMemoryMetricsTable(usage, requests, limits []api.MetricDataPoint) ([]s
 
 // HasMetricsData checks if the metrics response contains any data
 func HasMetricsData(metrics *api.MetricsResponse) bool {
+	if metrics == nil {
+		return false
+	}
 	return len(metrics.CpuUsage) > 0 ||
 		len(metrics.CpuRequests) > 0 ||
 		len(metrics.CpuLimits) > 0 ||
