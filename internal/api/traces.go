@@ -9,11 +9,8 @@ import (
 	"strconv"
 )
 
-// ListTraces fetches traces for an agent
-func (c *Client) ListTraces(orgName, projectName, agentName string, opts TraceListOptions) (*TraceListResponse, error) {
-	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/traces"
-
-	// Build query string
+// buildTraceQuery constructs query parameters for trace endpoints
+func buildTraceQuery(opts TraceListOptions, includeSort bool) string {
 	params := url.Values{}
 	params.Set("environment", opts.Environment)
 	if opts.StartTime != "" {
@@ -28,10 +25,16 @@ func (c *Client) ListTraces(orgName, projectName, agentName string, opts TraceLi
 	if opts.Offset > 0 {
 		params.Set("offset", strconv.Itoa(opts.Offset))
 	}
-	if opts.SortOrder != "" {
+	if includeSort && opts.SortOrder != "" {
 		params.Set("sortOrder", opts.SortOrder)
 	}
-	path += "?" + params.Encode()
+	return params.Encode()
+}
+
+// ListTraces fetches traces for an agent
+func (c *Client) ListTraces(orgName, projectName, agentName string, opts TraceListOptions) (*TraceListResponse, error) {
+	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/traces"
+	path += "?" + buildTraceQuery(opts, true)
 
 	resp, err := c.doRequest("GET", path)
 	if err != nil {
@@ -79,23 +82,7 @@ func (c *Client) GetTrace(orgName, projectName, agentName, traceID, environment 
 // ExportTraces exports traces with full span details
 func (c *Client) ExportTraces(orgName, projectName, agentName string, opts TraceListOptions) (*TraceExportResponse, error) {
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/traces/export"
-
-	// Build query string (same as ListTraces)
-	params := url.Values{}
-	params.Set("environment", opts.Environment)
-	if opts.StartTime != "" {
-		params.Set("startTime", opts.StartTime)
-	}
-	if opts.EndTime != "" {
-		params.Set("endTime", opts.EndTime)
-	}
-	if opts.Limit > 0 {
-		params.Set("limit", strconv.Itoa(opts.Limit))
-	}
-	if opts.Offset > 0 {
-		params.Set("offset", strconv.Itoa(opts.Offset))
-	}
-	path += "?" + params.Encode()
+	path += "?" + buildTraceQuery(opts, false)
 
 	resp, err := c.doRequest("GET", path)
 	if err != nil {

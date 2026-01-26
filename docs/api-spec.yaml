@@ -230,6 +230,9 @@ endpoints:
           type: string
           required: true
           cli_flag: "--env, -e"
+        - name: offset
+          type: integer
+          default: 0
         - name: startTime
           type: string
           format: datetime

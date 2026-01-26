@@ -126,12 +126,11 @@ Examples:
 		headers := []string{"TRACE ID", "ROOT SPAN", "STATUS", "DURATION", "TIMESTAMP"}
 		rows := make([][]string, len(traces.Traces))
 		for i, trace := range traces.Traces {
-			status := "OK"
-			if trace.Status != nil && trace.Status.ErrorCount > 0 {
-				status = ui.TraceStatusCell(trace.Status.ErrorCount)
-			} else {
-				status = ui.TraceStatusCell(0)
+			errorCount := 0
+			if trace.Status != nil {
+				errorCount = trace.Status.ErrorCount
 			}
+			status := ui.TraceStatusCell(errorCount)
 
 			rows[i] = []string{
 				ui.TruncateTraceID(trace.TraceID),
