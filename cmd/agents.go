@@ -13,6 +13,7 @@ import (
 	"github.com/Kavirubc/wso2-amp-cli/internal/api"
 	"github.com/Kavirubc/wso2-amp-cli/internal/config"
 	"github.com/Kavirubc/wso2-amp-cli/internal/ui"
+	"github.com/Kavirubc/wso2-amp-cli/internal/util"
 	"github.com/spf13/cobra"
 )
 
@@ -766,7 +767,7 @@ Examples:
 
 		// Parse --since flag into start time
 		if since != "" {
-			startTime, err := parseSinceDuration(since)
+			startTime, err := util.ParseSinceDuration(since)
 			if err != nil {
 				return fmt.Errorf("invalid --since value: %w", err)
 			}
@@ -833,35 +834,6 @@ Examples:
 
 		return nil
 	},
-}
-
-// parseSinceDuration parses a duration string like "1h", "24h", "7d" and returns the start time
-func parseSinceDuration(since string) (time.Time, error) {
-	since = strings.TrimSpace(strings.ToLower(since))
-
-	// Handle day suffix specially
-	if strings.HasSuffix(since, "d") {
-		days, err := strconv.Atoi(strings.TrimSuffix(since, "d"))
-		if err != nil {
-			return time.Time{}, fmt.Errorf("invalid duration: %s", since)
-		}
-		if days <= 0 {
-			return time.Time{}, fmt.Errorf("duration must be positive: %s", since)
-		}
-		return time.Now().Add(-time.Duration(days) * 24 * time.Hour), nil
-	}
-
-	// Use standard Go duration parsing for h, m, s
-	duration, err := time.ParseDuration(since)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("invalid duration: %s (use format like 1h, 30m, 24h, 7d)", since)
-	}
-
-	if duration <= 0 {
-		return time.Time{}, fmt.Errorf("duration must be positive: %s", since)
-	}
-
-	return time.Now().Add(-duration), nil
 }
 
 func init() {
