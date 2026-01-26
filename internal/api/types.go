@@ -313,3 +313,93 @@ type RuntimeLogRequest struct {
 	LogLevels       []string `json:"logLevels,omitempty"`
 	SearchPhrase    string   `json:"searchPhrase,omitempty"`
 }
+
+// --- Trace Types ---
+
+// TraceListOptions for GET traces with query parameters (not serialized to JSON)
+type TraceListOptions struct {
+	Environment string
+	StartTime   string
+	EndTime     string
+	Limit       int
+	Offset      int
+	SortOrder   string
+}
+
+// Trace represents a trace summary in list responses (TraceOverview in OpenAPI)
+type Trace struct {
+	TraceID         string       `json:"traceId"`
+	RootSpanID      string       `json:"rootSpanId"`
+	RootSpanName    string       `json:"rootSpanName"`
+	RootSpanKind    string       `json:"rootSpanKind,omitempty"` // llm, tool, agent, etc.
+	StartTime       time.Time    `json:"startTime"`
+	EndTime         time.Time    `json:"endTime"`
+	DurationInNanos int64        `json:"durationInNanos,omitempty"`
+	SpanCount       int          `json:"spanCount,omitempty"`
+	TokenUsage      *TokenUsage  `json:"tokenUsage,omitempty"`
+	Status          *TraceStatus `json:"status,omitempty"`
+	Input           interface{}  `json:"input,omitempty"`
+	Output          interface{}  `json:"output,omitempty"`
+}
+
+// TraceListResponse for list traces endpoint
+type TraceListResponse struct {
+	Traces     []Trace `json:"traces"`
+	TotalCount int     `json:"totalCount"`
+}
+
+// TokenUsage for LLM token tracking
+type TokenUsage struct {
+	InputTokens  int `json:"inputTokens"`
+	OutputTokens int `json:"outputTokens"`
+	TotalTokens  int `json:"totalTokens"`
+}
+
+// TraceStatus indicates error state
+type TraceStatus struct {
+	ErrorCount int `json:"errorCount"`
+}
+
+// Span represents a single span in a trace
+type Span struct {
+	TraceID         string                 `json:"traceId"`
+	SpanID          string                 `json:"spanId"`
+	ParentSpanID    string                 `json:"parentSpanId,omitempty"`
+	Name            string                 `json:"name"`
+	Service         string                 `json:"service"`
+	StartTime       time.Time              `json:"startTime"`
+	EndTime         time.Time              `json:"endTime"`
+	DurationInNanos int64                  `json:"durationInNanos"`
+	Kind            string                 `json:"kind"`   // CLIENT, SERVER, PRODUCER, CONSUMER, INTERNAL
+	Status          string                 `json:"status"` // OK, ERROR, UNSET
+	Attributes      map[string]interface{} `json:"attributes,omitempty"`
+}
+
+// TraceDetailsResponse for single trace GET
+type TraceDetailsResponse struct {
+	Spans      []Span `json:"spans"`
+	TotalCount int    `json:"totalCount"`
+}
+
+// FullTrace for export (includes all spans inline)
+type FullTrace struct {
+	TraceID         string       `json:"traceId"`
+	RootSpanID      string       `json:"rootSpanId"`
+	RootSpanName    string       `json:"rootSpanName"`
+	RootSpanKind    string       `json:"rootSpanKind,omitempty"`
+	StartTime       time.Time    `json:"startTime"`
+	EndTime         time.Time    `json:"endTime"`
+	DurationInNanos int64        `json:"durationInNanos,omitempty"`
+	SpanCount       int          `json:"spanCount,omitempty"`
+	TokenUsage      *TokenUsage  `json:"tokenUsage,omitempty"`
+	Status          *TraceStatus `json:"status,omitempty"`
+	Input           interface{}  `json:"input,omitempty"`
+	Output          interface{}  `json:"output,omitempty"`
+	Spans           []Span       `json:"spans"`
+}
+
+// TraceExportResponse for export endpoint
+type TraceExportResponse struct {
+	Traces     []FullTrace `json:"traces"`
+	TotalCount int         `json:"totalCount"`
+}

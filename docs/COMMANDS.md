@@ -34,6 +34,9 @@ Complete command reference for the WSO2 AI Agent Management Platform CLI.
 | `amp dataplanes list` | List data planes | `GET /orgs/{org}/data-planes` |
 | `amp pipelines list` | List pipelines | `GET /orgs/{org}/deployment-pipelines` |
 | `amp pipelines get` | Get pipeline details | `GET /orgs/{org}/deployment-pipelines/{name}` |
+| `amp traces list` | List traces | `GET .../agents/{agent}/traces` |
+| `amp traces get` | Get trace details | `GET .../agents/{agent}/trace/{traceId}` |
+| `amp traces export` | Export traces | `GET .../agents/{agent}/traces/export` |
 | `amp config set` | Set config value | - |
 | `amp config get` | Get config value | - |
 | `amp config list` | List config | - |
@@ -234,6 +237,56 @@ amp deployments endpoints --agent my-agent --env production
 amp deploy --agent my-agent --image sha256:abc123
 amp deploy --agent my-agent --image sha256:abc123 --set-env API_KEY=xxx --set-env DEBUG=true
 ```
+
+## Traces
+
+View distributed traces for deployed agents.
+
+### List Traces
+
+```bash
+amp traces list --agent my-agent --env development
+amp traces list --agent my-agent --env development --since 24h
+amp traces list --agent my-agent --env development --limit 50 --sort asc
+amp traces list --agent my-agent --env development --output json
+```
+
+| Flag | Short | Required | Default | Description |
+|------|-------|----------|---------|-------------|
+| `--agent` | `-a` | Yes | - | Agent name |
+| `--env` | `-e` | Yes | - | Environment name |
+| `--since` | - | No | 1h | Time filter (e.g., 1h, 24h, 7d) |
+| `--limit` | - | No | 25 | Max results (1-1000) |
+| `--sort` | - | No | desc | Sort order (asc/desc) |
+
+### Get Trace Details
+
+```bash
+amp traces get abc123def456 --agent my-agent --env development
+amp traces get abc123def456 --agent my-agent --env development --output json
+```
+
+| Flag | Short | Required | Default | Description |
+|------|-------|----------|---------|-------------|
+| `--agent` | `-a` | Yes | - | Agent name |
+| `--env` | `-e` | Yes | - | Environment name |
+
+### Export Traces
+
+```bash
+amp traces export --agent my-agent --env development --since 24h
+amp traces export --agent my-agent --env development --since 7d --file traces.json
+amp traces export --agent my-agent --env development --limit 200 --file traces.json --force
+```
+
+| Flag | Short | Required | Default | Description |
+|------|-------|----------|---------|-------------|
+| `--agent` | `-a` | Yes | - | Agent name |
+| `--env` | `-e` | Yes | - | Environment name |
+| `--since` | - | No | 24h | Time filter (e.g., 1h, 24h, 7d) |
+| `--file` | `-f` | No | - | Output file path |
+| `--force` | - | No | false | Overwrite existing file |
+| `--limit` | - | No | 100 | Max traces to export (1-1000) |
 
 ## Environments
 

@@ -217,6 +217,70 @@ endpoints:
           required: true
           cli_flag: "--env, -e"
 
+  # Traces
+  traces:
+    list:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/traces"
+      cli_command: "amp traces list --agent <name> --env <env>"
+      response_type: TraceListResponse
+      openapi_operation: listTraces
+      query_params:
+        - name: environment
+          type: string
+          required: true
+          cli_flag: "--env, -e"
+        - name: startTime
+          type: string
+          format: datetime
+        - name: endTime
+          type: string
+          format: datetime
+        - name: limit
+          type: integer
+          default: 25
+        - name: sortOrder
+          type: string
+          enum: ["asc", "desc"]
+          default: "desc"
+
+    get:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/trace/{traceId}"
+      cli_command: "amp traces get <traceId> --agent <name> --env <env>"
+      response_type: TraceDetailsResponse
+      openapi_operation: getTrace
+      path_params:
+        - name: traceId
+          type: string
+          required: true
+      query_params:
+        - name: environment
+          type: string
+          required: true
+          cli_flag: "--env, -e"
+
+    export:
+      method: GET
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/traces/export"
+      cli_command: "amp traces export --agent <name> --env <env>"
+      response_type: TraceExportResponse
+      openapi_operation: exportTraces
+      query_params:
+        - name: environment
+          type: string
+          required: true
+          cli_flag: "--env, -e"
+        - name: startTime
+          type: string
+          format: datetime
+        - name: endTime
+          type: string
+          format: datetime
+        - name: limit
+          type: integer
+          default: 100
+
   # Environments
   environments:
     list:
@@ -603,6 +667,138 @@ types:
       - name: logLevel
         type: string
 
+  # Trace types
+  TraceListOptions:
+    fields:
+      - name: environment
+        type: string
+        required: true
+      - name: startTime
+        type: string
+        format: datetime
+      - name: endTime
+        type: string
+        format: datetime
+      - name: limit
+        type: integer
+      - name: offset
+        type: integer
+      - name: sortOrder
+        type: string
+        enum: ["asc", "desc"]
+
+  Trace:
+    fields:
+      - name: traceId
+        type: string
+      - name: rootSpanId
+        type: string
+      - name: rootSpanName
+        type: string
+      - name: rootSpanKind
+        type: string
+      - name: startTime
+        type: datetime
+      - name: endTime
+        type: datetime
+      - name: durationInNanos
+        type: integer
+      - name: spanCount
+        type: integer
+      - name: tokenUsage
+        type: TokenUsage
+      - name: status
+        type: TraceStatus
+
+  TraceListResponse:
+    fields:
+      - name: traces
+        type: "[]Trace"
+      - name: totalCount
+        type: integer
+
+  TokenUsage:
+    fields:
+      - name: inputTokens
+        type: integer
+      - name: outputTokens
+        type: integer
+      - name: totalTokens
+        type: integer
+
+  TraceStatus:
+    fields:
+      - name: errorCount
+        type: integer
+
+  Span:
+    fields:
+      - name: traceId
+        type: string
+      - name: spanId
+        type: string
+      - name: parentSpanId
+        type: string
+      - name: name
+        type: string
+      - name: service
+        type: string
+      - name: startTime
+        type: datetime
+      - name: endTime
+        type: datetime
+      - name: durationInNanos
+        type: integer
+      - name: kind
+        type: string
+      - name: status
+        type: string
+      - name: attributes
+        type: map[string]any
+
+  TraceDetailsResponse:
+    fields:
+      - name: spans
+        type: "[]Span"
+      - name: totalCount
+        type: integer
+
+  FullTrace:
+    fields:
+      - name: traceId
+        type: string
+      - name: rootSpanId
+        type: string
+      - name: rootSpanName
+        type: string
+      - name: rootSpanKind
+        type: string
+      - name: startTime
+        type: datetime
+      - name: endTime
+        type: datetime
+      - name: durationInNanos
+        type: integer
+      - name: spanCount
+        type: integer
+      - name: tokenUsage
+        type: TokenUsage
+      - name: status
+        type: TraceStatus
+      - name: input
+        type: any
+      - name: output
+        type: any
+      - name: spans
+        type: "[]Span"
+
+  TraceExportResponse:
+    fields:
+      - name: traces
+        type: "[]FullTrace"
+      - name: totalCount
+        type: integer
+
   # Environment types
   Environment:
     fields:
@@ -887,6 +1083,59 @@ commands:
       - name: "--set-env, -e"
         description: "Environment variable (KEY=VALUE)"
         multiple: true
+
+  - name: amp traces list
+    description: "List traces for an agent"
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/traces"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--env, -e"
+        description: "Environment name"
+        required: true
+      - name: "--since"
+        description: "Show traces since (e.g., 1h, 24h, 7d)"
+        default: "1h"
+      - name: "--limit"
+        description: "Maximum traces to return (1-1000)"
+        default: 25
+      - name: "--sort"
+        description: "Sort order (asc/desc)"
+        default: "desc"
+
+  - name: amp traces get
+    description: "Get trace details"
+    args: ["<traceId>"]
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/trace/{traceId}"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--env, -e"
+        description: "Environment name"
+        required: true
+
+  - name: amp traces export
+    description: "Export traces with full span details"
+    api: "GET /orgs/{org}/projects/{proj}/agents/{agent}/traces/export"
+    flags:
+      - name: "--agent, -a"
+        description: "Agent name"
+        required: true
+      - name: "--env, -e"
+        description: "Environment name"
+        required: true
+      - name: "--since"
+        description: "Export traces since (e.g., 1h, 24h, 7d)"
+        default: "24h"
+      - name: "--file, -f"
+        description: "Output file path"
+      - name: "--force"
+        description: "Overwrite existing file"
+      - name: "--limit"
+        description: "Maximum traces to export (1-1000)"
+        default: 100
 
   - name: amp environments list
     description: "List environments"
