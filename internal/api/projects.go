@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // CreateProject creates a new project in an organization
@@ -31,27 +32,33 @@ func (c *Client) CreateProject(orgName string, req CreateProjectRequest) (*Proje
 	return &project, nil
 }
 
-// ListProjects fetches all projects in an organization
-func (c *Client) ListProjects(orgName string) ([]ProjectResponse, error) {
+// ListProjects fetches projects in an organization with pagination
+func (c *Client) ListProjects(orgName string, opts ListOptions) ([]ProjectResponse, int, error) {
+	params := url.Values{}
+	buildPaginationQuery(params, opts)
+
 	path := "/orgs/" + orgName + "/projects"
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
 
 	resp, err := c.doRequest("GET", path)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+		return nil, 0, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
 	var listResp ProjectListResponse
 	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, 0, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return listResp.Projects, nil
+	return listResp.Projects, listResp.Total, nil
 }
 
 // GetProject fetches a specific project

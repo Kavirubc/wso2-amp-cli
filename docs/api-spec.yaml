@@ -151,6 +151,20 @@ endpoints:
       response_type: LogsResponse
       openapi_operation: filterAgentRuntimeLogs
 
+    metrics:
+      method: POST
+      path: "/orgs/{orgName}/projects/{projName}/agents/{agentName}/metrics"
+      cli_command: "amp agents metrics --agent <name> --env <env>"
+      request_type: MetricsFilterRequest
+      response_type: MetricsResponse
+      openapi_operation: filterAgentMetrics
+      notes: |
+        Fetches CPU and memory metrics for a deployed agent.
+        Request body:
+          - environmentName: Environment to query (required)
+          - startTime: Start of time range (RFC3339)
+          - endTime: End of time range (RFC3339)
+
   # Builds
   builds:
     list:

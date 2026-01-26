@@ -123,7 +123,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 
 	// Step 4: Select default project
 	if defaultOrg != "" {
-		projects, err := client.ListProjects(defaultOrg)
+		projects, _, err := client.ListProjects(defaultOrg, api.DefaultListOptions())
 		if err != nil {
 			fmt.Println(ui.RenderWarning("Could not fetch projects"))
 		} else if len(projects) > 0 {

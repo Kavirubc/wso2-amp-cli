@@ -24,6 +24,8 @@ var environmentsListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		org, _ := cmd.Flags().GetString("org")
 		output, _ := cmd.Flags().GetString("output")
+		limit, _ := cmd.Flags().GetInt("limit")
+		offset, _ := cmd.Flags().GetInt("offset")
 
 		// Use default org from config if not provided
 		if org == "" {
@@ -39,7 +41,10 @@ var environmentsListCmd = &cobra.Command{
 			config.GetAPIKeyValue(),
 		)
 
-		environments, err := client.ListEnvironments(org)
+		// Build pagination options
+		opts := api.ListOptions{Limit: limit, Offset: offset}
+
+		environments, total, err := client.ListEnvironments(org, opts)
 		if err != nil {
 			return fmt.Errorf("failed to list environments: %w", err)
 		}
@@ -72,6 +77,7 @@ var environmentsListCmd = &cobra.Command{
 
 		title := fmt.Sprintf("🌍 Environments in %s", org)
 		fmt.Println(ui.RenderTableWithTitle(title, headers, rows))
+		fmt.Println(ui.RenderPaginationInfo(offset, limit, total))
 		return nil
 	},
 }

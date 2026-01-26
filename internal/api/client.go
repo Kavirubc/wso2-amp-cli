@@ -103,7 +103,7 @@ func TestConnection(baseURL string) error {
 
 // ValidateAuth tests if credentials are valid and returns organizations if successful
 func (c *Client) ValidateAuth() ([]OrganizationResponse, error) {
-	orgs, err := c.ListOrganizations()
+	orgs, _, err := c.ListOrganizations(DefaultListOptions())
 	if err != nil {
 		return nil, err
 	}

@@ -34,27 +34,34 @@ func (c *Client) TriggerBuild(orgName, projectName, agentName, commitID string) 
 	return &build, nil
 }
 
-// ListBuilds fetches all builds for an agent
-func (c *Client) ListBuilds(orgName, projectName, agentName string) ([]BuildResponse, error) {
+// ListBuilds fetches builds for an agent with pagination
+func (c *Client) ListBuilds(orgName, projectName, agentName string, opts ListOptions) ([]BuildResponse, int, error) {
+	params := url.Values{}
+	buildPaginationQuery(params, opts)
+
 	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/builds"
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
 
 	resp, err := c.doRequest("GET", path)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+		return nil, 0, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	var builds []BuildResponse
-	if err := json.NewDecoder(resp.Body).Decode(&builds); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	// Decode paginated response
+	var listResp BuildListResponse
+	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return builds, nil
+	return listResp.Builds, listResp.Total, nil
 }
 
 // GetBuild fetches a specific build with detailed information

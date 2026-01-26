@@ -65,20 +65,23 @@ var orgsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all organizations",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		//Get the output flag
+		// Get flags
 		output, _ := cmd.Flags().GetString("output")
+		limit, _ := cmd.Flags().GetInt("limit")
+		offset, _ := cmd.Flags().GetInt("offset")
 
-		//API Client
+		// API Client
 		client := api.NewClient(
 			config.GetAPIURL(),
 			config.GetAPIKeyHeader(),
 			config.GetAPIKeyValue(),
 		)
 
-		//API Call
+		// Build pagination options
+		opts := api.ListOptions{Limit: limit, Offset: offset}
 
-		orgs, err := client.ListOrganizations()
-
+		// API Call
+		orgs, total, err := client.ListOrganizations(opts)
 		if err != nil {
 			return fmt.Errorf("failed to list organizations: %w", err)
 		}
@@ -104,6 +107,7 @@ var orgsListCmd = &cobra.Command{
 			}
 		}
 		fmt.Println(ui.RenderTableWithTitle("🏢 Organizations", headers, rows))
+		fmt.Println(ui.RenderPaginationInfo(offset, limit, total))
 		return nil
 	},
 }
