@@ -108,7 +108,7 @@ func (c *Client) GenerateAgentToken(orgName, projectName, agentName string, req 
 
 // GetAgentRuntimeLogs fetches runtime logs for a deployed agent
 func (c *Client) GetAgentRuntimeLogs(orgName, projectName, agentName string, req RuntimeLogRequest) (*LogsResponse, error) {
-	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/logs"
+	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/runtime-logs"
 
 	resp, err := c.doRequestWithBody("POST", path, req)
 	if err != nil {

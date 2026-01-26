@@ -298,7 +298,7 @@ type TokenResponse struct {
 	TokenType string `json:"tokenType"`
 }
 
-// RuntimeLogRequest for POST /orgs/{org}/projects/{proj}/agents/{agent}/logs
+// RuntimeLogRequest for POST /orgs/{org}/projects/{proj}/agents/{agent}/runtime-logs
 type RuntimeLogRequest struct {
 	EnvironmentName string   `json:"environmentName"`
 	StartTime       string   `json:"startTime,omitempty"`
