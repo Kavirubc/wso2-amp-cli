@@ -23,6 +23,7 @@ Complete command reference for the WSO2 AI Agent Management Platform CLI.
 | `amp agents delete` | Delete agent | `DELETE /orgs/{org}/projects/{proj}/agents/{name}` |
 | `amp agents token` | Generate JWT token | `POST .../agents/{name}/token` |
 | `amp agents logs` | View runtime logs | `POST .../agents/{name}/runtime-logs` |
+| `amp agents metrics` | View resource metrics | `POST .../agents/{name}/metrics` |
 | `amp builds list` | List builds | `GET .../agents/{agent}/builds` |
 | `amp builds get` | Get build details | `GET .../agents/{agent}/builds/{name}` |
 | `amp builds trigger` | Trigger build | `POST .../agents/{agent}/builds` |
@@ -48,6 +49,8 @@ Complete command reference for the WSO2 AI Agent Management Platform CLI.
 | `--org` | `-o` | Organization name |
 | `--project` | `-p` | Project name |
 | `--output` | | Output format: `table` or `json` |
+| `--limit` | | Maximum results to return (for list commands) |
+| `--offset` | | Number of results to skip (for pagination) |
 | `--verbose` | `-v` | Enable verbose output |
 | `--help` | `-h` | Show help |
 
@@ -79,6 +82,7 @@ amp logout --force  # Skip confirmation
 ```bash
 amp orgs list
 amp orgs list --output json
+amp orgs list --limit 20 --offset 0
 ```
 
 ### Get Organization
@@ -103,6 +107,7 @@ amp orgs create my-org --output json
 ```bash
 amp projects list
 amp projects list --org my-org
+amp projects list --limit 20 --offset 0
 ```
 
 ### Get Project
@@ -141,6 +146,7 @@ amp projects pipeline my-project
 ```bash
 amp agents list
 amp agents list --project my-project
+amp agents list --limit 20 --offset 0
 ```
 
 ### Get Agent
@@ -189,12 +195,30 @@ amp agents logs --agent my-agent --env production --since 1h --level ERROR
 amp agents logs --agent my-agent --env development --search "error" --limit 50
 ```
 
+### View Resource Metrics
+
+```bash
+amp agents metrics --agent my-agent --env development
+amp agents metrics --agent my-agent --env development --since 1h
+amp agents metrics --agent my-agent --env development --start "2025-01-20T13:00:00Z" --end "2025-01-20T14:00:00Z"
+amp agents metrics --agent my-agent --env development --output json
+```
+
+| Flag | Short | Required | Default | Description |
+|------|-------|----------|---------|-------------|
+| `--agent` | `-a` | Yes | - | Agent name |
+| `--env` | `-e` | Yes | - | Environment name |
+| `--since` | - | No | 1h | Time filter (e.g., 1h, 24h, 7d) |
+| `--start` | - | No | - | Start time (RFC3339 format) |
+| `--end` | - | No | - | End time (RFC3339 format) |
+
 ## Builds
 
 ### List Builds
 
 ```bash
 amp builds list --agent my-agent
+amp builds list --agent my-agent --limit 20 --offset 0
 ```
 
 ### Get Build Details

@@ -99,6 +99,14 @@ type BuildStep struct {
 	FinishedAt string `json:"finishedAt,omitempty"`
 }
 
+// BuildListResponse wraps paginated builds response
+type BuildListResponse struct {
+	Builds []BuildResponse `json:"builds"`
+	Limit  int             `json:"limit"`
+	Offset int             `json:"offset"`
+	Total  int             `json:"total"`
+}
+
 // LogsResponse contains logs with metadata (used for both build and runtime logs)
 type LogsResponse struct {
 	Logs       []LogEntry `json:"logs"`
@@ -402,4 +410,29 @@ type FullTrace struct {
 type TraceExportResponse struct {
 	Traces     []FullTrace `json:"traces"`
 	TotalCount int         `json:"totalCount"`
+}
+
+// --- Metrics Types ---
+
+// MetricsFilterRequest for POST /orgs/{org}/projects/{proj}/agents/{agent}/metrics
+type MetricsFilterRequest struct {
+	EnvironmentName string `json:"environmentName"`
+	StartTime       string `json:"startTime"`
+	EndTime         string `json:"endTime"`
+}
+
+// MetricsResponse contains CPU and memory metrics data
+type MetricsResponse struct {
+	CpuUsage       []MetricDataPoint `json:"cpuUsage"`
+	CpuRequests    []MetricDataPoint `json:"cpuRequests"`
+	CpuLimits      []MetricDataPoint `json:"cpuLimits"`
+	Memory         []MetricDataPoint `json:"memory"`
+	MemoryRequests []MetricDataPoint `json:"memoryRequests"`
+	MemoryLimits   []MetricDataPoint `json:"memoryLimits"`
+}
+
+// MetricDataPoint represents a single metric value at a point in time
+type MetricDataPoint struct {
+	Timestamp string  `json:"timestamp"`
+	Value     float64 `json:"value"`
 }
