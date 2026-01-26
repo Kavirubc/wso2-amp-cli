@@ -436,3 +436,11 @@ type MetricDataPoint struct {
 	Timestamp string  `json:"timestamp"`
 	Value     float64 `json:"value"`
 }
+
+// ConfigurationResponse contains environment variables configured for an agent in a specific environment
+type ConfigurationResponse struct {
+	ProjectName    string                `json:"projectName"`
+	AgentName      string                `json:"agentName"`
+	Environment    string                `json:"environment"`
+	Configurations []EnvironmentVariable `json:"configurations"`
+}

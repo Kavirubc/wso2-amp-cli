@@ -158,3 +158,27 @@ func (c *Client) GetAgentMetrics(orgName, projectName, agentName string, req Met
 
 	return &metricsResp, nil
 }
+
+// GetAgentConfigurations fetches environment variables for an agent in a specific environment
+func (c *Client) GetAgentConfigurations(orgName, projectName, agentName, environment string) (*ConfigurationResponse, error) {
+	path := "/orgs/" + orgName + "/projects/" + projectName + "/agents/" + agentName + "/configurations"
+	path += "?environment=" + url.QueryEscape(environment)
+
+	resp, err := c.doRequest("GET", path)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var configResp ConfigurationResponse
+	if err := json.NewDecoder(resp.Body).Decode(&configResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &configResp, nil
+}
