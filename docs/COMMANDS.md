@@ -24,6 +24,7 @@ Complete command reference for the WSO2 AI Agent Management Platform CLI.
 | `amp agents token` | Generate JWT token | `POST .../agents/{name}/token` |
 | `amp agents logs` | View runtime logs | `POST .../agents/{name}/runtime-logs` |
 | `amp agents metrics` | View resource metrics | `POST .../agents/{name}/metrics` |
+| `amp agents config` | View environment variables | `GET .../agents/{name}/configurations` |
 | `amp builds list` | List builds | `GET .../agents/{agent}/builds` |
 | `amp builds get` | Get build details | `GET .../agents/{agent}/builds/{name}` |
 | `amp builds trigger` | Trigger build | `POST .../agents/{agent}/builds` |
@@ -211,6 +212,24 @@ amp agents metrics --agent my-agent --env development --output json
 | `--since` | - | No | 1h | Time filter (e.g., 1h, 24h, 7d) |
 | `--start` | - | No | - | Start time (RFC3339 format) |
 | `--end` | - | No | - | End time (RFC3339 format) |
+
+### View Environment Variables
+
+View environment variables configured for an agent in a specific environment.
+
+```bash
+amp agents config --agent my-agent --env development
+amp agents config --agent my-agent --env development --show-secrets
+amp agents config --agent my-agent --env development --output json
+```
+
+| Flag | Short | Required | Default | Description |
+|------|-------|----------|---------|-------------|
+| `--agent` | `-a` | Yes | - | Agent name |
+| `--env` | `-e` | Yes | - | Environment name |
+| `--show-secrets` | - | No | false | Show unmasked values for sensitive variables |
+
+Sensitive values (keys containing "secret", "password", "token", "api_key", etc.) are masked by default. Use `--show-secrets` to reveal them.
 
 ## Builds
 
