@@ -979,6 +979,136 @@ Examples:
 	},
 }
 
+var agentsConfigCmd = &cobra.Command{
+	Use:   "config",
+	Short: "View environment variables configured for a deployed agent",
+	Long: `Fetch and display environment variables configured for an agent in a specific environment.
+
+Examples:
+  amp agents config --agent myagent --env development
+  amp agents config --agent myagent --env dev --output json
+  amp agents config --agent myagent --env dev --show-secrets`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Get flags
+		org, _ := cmd.Flags().GetString("org")
+		project, _ := cmd.Flags().GetString("project")
+		agentName, _ := cmd.Flags().GetString("agent")
+		envName, _ := cmd.Flags().GetString("env")
+		output, _ := cmd.Flags().GetString("output")
+		showSecrets, _ := cmd.Flags().GetBool("show-secrets")
+
+		// Use defaults from config if not provided
+		if org == "" {
+			org = config.GetDefaultOrg()
+		}
+		if project == "" {
+			project = config.GetDefaultProject()
+		}
+
+		// Validate required fields
+		if org == "" {
+			return fmt.Errorf("organization is required. Use --org flag or set default with: amp config set default_org <name>")
+		}
+		if project == "" {
+			return fmt.Errorf("project is required. Use --project flag or set default with: amp config set default_project <name>")
+		}
+		if agentName == "" {
+			return fmt.Errorf("agent name is required. Use --agent flag")
+		}
+		if envName == "" {
+			return fmt.Errorf("environment name is required. Use --env flag")
+		}
+
+		// Create API client
+		client := api.NewClient(
+			config.GetAPIURL(),
+			config.GetAPIKeyHeader(),
+			config.GetAPIKeyValue(),
+		)
+
+		// Fetch configuration from API
+		configResp, err := client.GetAgentConfigurations(org, project, agentName, envName)
+		if err != nil {
+			return fmt.Errorf("failed to get configuration: %w", err)
+		}
+
+		// JSON output
+		if output == "json" {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(configResp)
+		}
+
+		// Check if there are any configurations
+		if len(configResp.Configurations) == 0 {
+			fmt.Println(ui.RenderWarning("No environment variables configured for this agent."))
+			return nil
+		}
+
+		// Display configurations
+		title := fmt.Sprintf("%s Environment Variables for %s (%s)", ui.IconAgent, agentName, envName)
+		fmt.Println(ui.TitleStyle.Render(title))
+		fmt.Println()
+
+		// Build table data
+		headers := []string{"KEY", "VALUE"}
+		rows := make([][]string, len(configResp.Configurations))
+		for i, cfg := range configResp.Configurations {
+			value := cfg.Value
+			// Mask sensitive values unless --show-secrets is specified
+			if !showSecrets && isSensitiveKey(cfg.Key) {
+				value = maskSensitiveValue(cfg.Value)
+			}
+			rows[i] = []string{cfg.Key, value}
+		}
+
+		// Render table
+		fmt.Println(ui.RenderTable(headers, rows))
+		fmt.Println()
+
+		// Show hint about --show-secrets if any values are masked
+		if !showSecrets && hasAnySensitiveKey(configResp.Configurations) {
+			fmt.Println(ui.MutedStyle.Render("  Tip: Use --show-secrets to reveal masked values"))
+			fmt.Println()
+		}
+
+		return nil
+	},
+}
+
+// isSensitiveKey checks if a key name suggests it contains sensitive data
+func isSensitiveKey(key string) bool {
+	lowerKey := strings.ToLower(key)
+	sensitivePatterns := []string{
+		"secret", "password", "passwd", "pwd", "token", "api_key", "apikey",
+		"auth", "credential", "private", "key", "cert", "certificate",
+	}
+	for _, pattern := range sensitivePatterns {
+		if strings.Contains(lowerKey, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+// maskSensitiveValue returns a masked version of the value, showing first 2 and last 2 chars
+func maskSensitiveValue(value string) string {
+	if len(value) <= 4 {
+		return "****"
+	}
+	return value[:2] + strings.Repeat("*", len(value)-4) + value[len(value)-2:]
+}
+
+// hasAnySensitiveKey checks if any configuration has a sensitive key
+func hasAnySensitiveKey(configs []api.EnvironmentVariable) bool {
+	for _, cfg := range configs {
+		if isSensitiveKey(cfg.Key) {
+			return true
+		}
+	}
+	return false
+}
+
 func init() {
 	rootCmd.AddCommand(agentsCmd)
 	agentsCmd.AddCommand(agentsListCmd)
@@ -988,6 +1118,7 @@ func init() {
 	agentsCmd.AddCommand(agentsCreateCmd)
 	agentsCmd.AddCommand(agentsLogsCmd)
 	agentsCmd.AddCommand(agentsMetricsCmd)
+	agentsCmd.AddCommand(agentsConfigCmd)
 
 	// Add flags for token command
 	agentsTokenCmd.Flags().StringP("agent", "a", "", "Agent name (required)")
@@ -1023,4 +1154,9 @@ func init() {
 	agentsMetricsCmd.Flags().String("since", "", "Show metrics since duration (e.g., 1h, 24h, 7d)")
 	agentsMetricsCmd.Flags().String("start", "", "Start time (RFC3339 format)")
 	agentsMetricsCmd.Flags().String("end", "", "End time (RFC3339 format)")
+
+	// Add flags for config command
+	agentsConfigCmd.Flags().StringP("agent", "a", "", "Agent name (required)")
+	agentsConfigCmd.Flags().StringP("env", "e", "", "Environment name (required)")
+	agentsConfigCmd.Flags().Bool("show-secrets", false, "Show unmasked values for sensitive variables")
 }
